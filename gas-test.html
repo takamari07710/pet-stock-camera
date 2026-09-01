@@ -18,7 +18,6 @@
   未実行
 </div>
 
-
 <script>
 
 const GAS_URL =
@@ -27,13 +26,21 @@ const GAS_URL =
 
 function testGAS() {
 
+  document.getElementById(
+    'result'
+  ).textContent =
+    'GASへ接続中…';
+
+
   const callbackName =
     'gasCallback_' +
     Date.now();
 
 
   const script =
-    document.createElement('script');
+    document.createElement(
+      'script'
+    );
 
 
   window[callbackName] =
@@ -59,18 +66,29 @@ function testGAS() {
     };
 
 
+  script.onerror =
+    function() {
+
+      document.getElementById(
+        'result'
+      ).textContent =
+        'GASへの通信に失敗しました';
+
+    };
+
+
   const url =
     GAS_URL +
     '?callback=' +
     callbackName;
 
 
-  document
-    .body
-    .appendChild(script);
-
-
   script.src = url;
+
+
+  document.body.appendChild(
+    script
+  );
 
 }
 
