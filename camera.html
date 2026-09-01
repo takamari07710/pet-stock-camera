@@ -1,474 +1,990 @@
-const SPREADSHEET_ID =
-  '1fRlCfjLEDqovtA6UZDIgiHSWLhvcpdpfa9HTmhFsLlE';
+　```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
 
-const STOCK_SHEET_NAME =
-  'ペットシーツ在庫';
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
 
-const HISTORY_SHEET_NAME =
-  '履歴';
+  <title>ペットシーツ在庫</title>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 15px;
+      background: #f5f5f5;
+      color: #222;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 10px 0 15px;
+    }
+
+    /* =========================
+       入庫・使用
+    ========================= */
+
+    .mode {
+      display: flex;
+      gap: 10px;
+      max-width: 500px;
+      margin: 15px auto;
+    }
+
+    .mode button {
+      flex: 1;
+      padding: 15px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      background: #ddd;
+    }
+
+    .mode button.active {
+      background: #2196f3;
+      color: white;
+    }
+
+    /* =========================
+       カメラ
+    ========================= */
+
+    #cameraArea {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    #reader {
+      width: 100%;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    /* =========================
+       読み取り成功表示
+    ========================= */
+
+    #successOverlay {
+      display: none;
+
+      position: absolute;
+
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+
+      z-index: 9999;
+
+      background: rgba(0, 180, 0, 0.85);
+
+      color: white;
+
+      align-items: center;
+      justify-content: center;
+
+      flex-direction: column;
+
+      border-radius: 10px;
+
+      pointer-events: none;
+    }
+
+    #successOverlay .icon {
+      font-size: 80px;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    #successOverlay .title {
+      font-size: 30px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    #successOverlay .code {
+      font-size: 18px;
+      margin-top: 10px;
+    }
+
+    /* =========================
+       商品情報
+    ========================= */
+
+    .result {
+      max-width: 500px;
+      margin: 15px auto;
+      padding: 18px;
+      background: white;
+      border-radius: 10px;
+    }
+
+    #productName {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .stockRow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      padding: 10px 0;
+
+      font-size: 18px;
+
+      border-bottom: 1px solid #ddd;
+    }
+
+    .stockValue {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    /* =========================
+       端数入力
+    ========================= */
+
+    .remainderArea {
+      margin-top: 18px;
+      padding: 15px;
+
+      background: #f1f8ff;
+
+      border-radius: 10px;
+    }
+
+    .remainderTitle {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    #remainderInput {
+
+      width: 150px;
+
+      padding: 12px;
+
+      font-size: 26px;
+
+      text-align: center;
+
+      border: 2px solid #2196f3;
+
+      border-radius: 8px;
+
+      box-sizing: border-box;
+    }
+
+    .remainderUnit {
+      font-size: 18px;
+      margin-left: 5px;
+    }
+
+    #confirmButton {
+
+      display: block;
+
+      width: 100%;
+
+      margin-top: 15px;
+
+      padding: 15px;
+
+      font-size: 20px;
+
+      font-weight: bold;
+
+      border: none;
+
+      border-radius: 10px;
+
+      background: #4caf50;
+
+      color: white;
+    }
+
+    #confirmButton:disabled {
+      background: #aaa;
+    }
+
+    /* =========================
+       合計
+    ========================= */
+
+    .totalArea {
+
+      margin-top: 15px;
+
+      padding: 12px;
+
+      background: #fff8e1;
+
+      border-radius: 10px;
+    }
+
+    .totalLabel {
+      font-size: 18px;
+    }
+
+    #total {
+
+      font-size: 36px;
+
+      font-weight: bold;
+
+      margin-top: 5px;
+    }
+
+    /* =========================
+       警告
+    ========================= */
+
+    #warning {
+
+      margin-top: 10px;
+
+      color: #d32f2f;
+
+      font-weight: bold;
+    }
+
+    /* =========================
+       メッセージ
+    ========================= */
+
+    #message {
+
+      max-width: 500px;
+
+      margin: 15px auto;
+
+      padding: 15px;
+
+      border-radius: 10px;
+
+      background: #e8f5e9;
+    }
+
+    #message.error {
+
+      background: #ffebee;
+
+      color: #c62828;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<h1>🐾 ペットシーツ在庫</h1>
+
+
+<!-- =========================
+     入庫・使用
+========================= -->
+
+<div class="mode">
+
+  <button
+    id="inButton"
+    class="active"
+    onclick="setMode('in')">
+
+    ＋ 入庫
+
+  </button>
+
+  <button
+    id="outButton"
+    onclick="setMode('out')">
+
+    − 使用
+
+  </button>
+
+</div>
+
+
+<!-- =========================
+     カメラ
+========================= -->
+
+<div id="cameraArea">
+
+  <div id="reader"></div>
+
+  <div id="successOverlay">
+
+    <div class="icon">
+      ✓
+    </div>
+
+    <div class="title">
+      読み取り成功
+    </div>
+
+    <div
+      class="code"
+      id="successCode">
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     商品情報
+========================= -->
+
+<div class="result">
+
+  <div id="productName">
+    バーコードを読み取ってください
+  </div>
+
+
+  <div class="stockRow">
+
+    <span>
+      パック数
+    </span>
+
+    <span
+      class="stockValue"
+      id="packCount">
+      -
+    </span>
+
+    <span>
+      パック
+    </span>
+
+  </div>
+
+
+  <div class="stockRow">
+
+    <span>
+      1パックあたり
+    </span>
+
+    <span
+      class="stockValue"
+      id="perPack">
+      -
+    </span>
+
+    <span>
+      個
+    </span>
+
+  </div>
+
+
+  <!-- =========================
+       端数
+  ========================= -->
+
+  <div
+    class="remainderArea"
+    id="remainderArea"
+    style="display:none;">
+
+    <div class="remainderTitle">
+      端数を入力してください
+    </div>
+
+    <input
+      type="number"
+      id="remainderInput"
+      min="0"
+      step="1"
+      inputmode="numeric"
+      autocomplete="off">
+
+    <span class="remainderUnit">
+      個
+    </span>
+
+
+    <button
+      id="confirmButton"
+      type="button"
+      onclick="confirmRemainder()">
+
+      確定
+
+    </button>
+
+  </div>
+
+
+  <!-- =========================
+       合計
+  ========================= -->
+
+  <div
+    class="totalArea"
+    id="totalArea"
+    style="display:none;">
+
+    <div class="totalLabel">
+      合計
+    </div>
+
+    <div id="total">
+      -
+    </div>
+
+    <div>
+      個
+    </div>
+
+  </div>
+
+
+  <div id="warning"></div>
+
+</div>
+
+
+<!-- =========================
+     メッセージ
+========================= -->
+
+<div id="message">
+  カメラを準備しています…
+</div>
+
+
+<script>
 
 
 /* =================================================
-   Webアプリ
+   GAS URL
 ================================================= */
 
-function doGet(e) {
-
-  const action =
-    e &&
-    e.parameter &&
-    e.parameter.action
-      ? String(e.parameter.action).trim()
-      : '';
+const GAS_URL =
+  'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec';
 
 
-  /*
-   * GitHub PagesからのAPI通信
-   */
-  if (action !== '') {
+/* =================================================
+   変数
+================================================= */
 
-    return api(e);
+let scanner = null;
 
-  }
+let mode = 'in';
+
+let processing = false;
+
+let lastCode = '';
+
+let lastScanTime = 0;
+
+let currentJAN = '';
+
+let currentProduct = null;
 
 
-  /*
-   * GASを直接開いた場合
-   */
-  return HtmlService
-    .createHtmlOutput(
-      'ペットシーツ在庫API'
+/* =================================================
+   入庫・使用
+================================================= */
+
+function setMode(newMode) {
+
+  mode = newMode;
+
+  document
+    .getElementById('inButton')
+    .classList
+    .toggle(
+      'active',
+      mode === 'in'
     );
+
+  document
+    .getElementById('outButton')
+    .classList
+    .toggle(
+      'active',
+      mode === 'out'
+    );
+
+  showMessage(
+    mode === 'in'
+      ? '＋ 入庫モード'
+      : '− 使用モード'
+  );
 
 }
 
 
 /* =================================================
-   API
+   メッセージ
 ================================================= */
 
-function api(e) {
-
-  let callback =
-    'callback';
-
-
-  if (
-    e &&
-    e.parameter &&
-    e.parameter.callback
-  ) {
-
-    callback =
-      String(
-        e.parameter.callback
-      );
-
-  }
-
-
-  /*
-   * callback名の安全確認
-   */
-  if (
-    !/^[a-zA-Z_$][0-9a-zA-Z_$]*$/
-      .test(callback)
-  ) {
-
-    callback =
-      'callback';
-
-  }
-
-
-  let result;
-
-
-  try {
-
-    const action =
-      String(
-        e.parameter.action || ''
-      ).trim();
-
-
-    const jan =
-      String(
-        e.parameter.code || ''
-      ).trim();
-
-
-    /*
-     * JANコード確認
-     */
-    if (!jan) {
-
-      result = {
-
-        success: false,
-
-        message:
-          'JANコードがありません。'
-
-      };
-
-    }
-
-
-    /*
-     * 商品情報取得
-     */
-    else if (
-      action === 'getProduct'
-    ) {
-
-      result =
-        getProduct(jan);
-
-    }
-
-
-    /*
-     * 端数保存
-     */
-    else if (
-      action === 'setRemainder'
-    ) {
-
-      const remainder =
-        Number(
-          e.parameter.remainder
-        );
-
-
-      result =
-        setRemainder(
-          jan,
-          remainder
-        );
-
-    }
-
-
-    /*
-     * 入庫・使用
-     */
-    else if (
-      action === 'updateStock'
-    ) {
-
-      const mode =
-        String(
-          e.parameter.mode || 'in'
-        ).trim();
-
-
-      result =
-        updateStock(
-          jan,
-          mode
-        );
-
-    }
-
-
-    /*
-     * 旧形式の入庫・使用にも対応
-     *
-     * actionがない場合は
-     * updateStockとして扱うことも可能
-     */
-    else {
-
-      result = {
-
-        success: false,
-
-        message:
-          '不正なactionです。'
-
-      };
-
-    }
-
-  }
-
-
-  catch (error) {
-
-    result = {
-
-      success: false,
-
-      message:
-        error.message
-
-    };
-
-  }
-
-
-  /*
-   * codeを必ず返す
-   */
-  if (!result) {
-
-    result = {
-
-      success: false,
-
-      message:
-        '処理結果を取得できませんでした。'
-
-    };
-
-  }
-
-
-  result.code =
-    String(
-      e.parameter.code || ''
-    ).trim();
-
-
-  /*
-   * JSONP
-   */
-  const output =
-    callback +
-    '(' +
-    JSON.stringify(result) +
-    ');';
-
-
-  return ContentService
-    .createTextOutput(
-      output
-    )
-    .setMimeType(
-      ContentService.MimeType.JAVASCRIPT
-    );
-
-}
-
-
-/* =================================================
-   在庫シート取得
-================================================= */
-
-function getStockSheet() {
-
-  const ss =
-    SpreadsheetApp.openById(
-      SPREADSHEET_ID
-    );
-
-
-  const sheet =
-    ss.getSheetByName(
-      STOCK_SHEET_NAME
-    );
-
-
-  if (!sheet) {
-
-    throw new Error(
-      '「' +
-      STOCK_SHEET_NAME +
-      '」シートが見つかりません。'
-    );
-
-  }
-
-
-  return sheet;
-
-}
-
-
-/* =================================================
-   商品検索
-================================================= */
-
-function getProduct(jan) {
-
-  jan =
-    String(jan).trim();
-
-
-  const sheet =
-    getStockSheet();
-
-
-  const values =
-    sheet
-      .getDataRange()
-      .getValues();
-
-
-  /*
-   * 列構成
-   *
-   * A = JANコード
-   * B = 商品名
-   * C = パック数
-   * D = 1パックあたり
-   * E = 端数
-   * F = 合計
-   */
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-    const code =
-      String(
-        values[i][0]
-      ).trim();
-
-
-    if (code !== jan) {
-
-      continue;
-
-    }
-
-
-    const row =
-      i + 1;
-
-
-    const name =
-      values[i][1];
-
-
-    const packCount =
-      Number(
-        values[i][2]
-      ) || 0;
-
-
-    const perPack =
-      Number(
-        values[i][3]
-      ) || 0;
-
-
-    const remainder =
-      Number(
-        values[i][4]
-      ) || 0;
-
-
-    /*
-     * 合計
-     *
-     * パック数 × 1パックあたり
-     * ＋
-     * 端数
-     */
-
-    const total =
-      (
-        packCount *
-        perPack
-      ) +
-      remainder;
-
-
-    /*
-     * F列を更新
-     */
-    sheet
-      .getRange(
-        row,
-        6
-      )
-      .setValue(
-        total
-      );
-
-
-    return {
-
-      success: true,
-
-      code:
-        jan,
-
-      name:
-        name,
-
-      packCount:
-        packCount,
-
-      perPack:
-        perPack,
-
-      remainder:
-        remainder,
-
-      total:
-        total
-
-    };
-
-  }
-
-
-  /*
-   * JANが見つからない
-   */
-
-  return {
-
-    success: false,
-
-    notFound: true,
-
-    message:
-      '登録されていないJANコードです。',
-
-    code:
-      jan
-
-  };
-
-}
-
-
-/* =================================================
-   端数保存
-================================================= */
-
-function setRemainder(
-  jan,
-  remainder
+function showMessage(
+  text,
+  error = false
 ) {
 
-  jan =
-    String(jan).trim();
+  const message =
+    document.getElementById(
+      'message'
+    );
+
+  message.textContent =
+    text;
+
+  message.className =
+    error
+      ? 'error'
+      : '';
+
+}
 
 
-  remainder =
-    Number(remainder);
+/* =================================================
+   読み取り成功表示
+================================================= */
+
+function showSuccessOverlay(
+  code
+) {
+
+  const overlay =
+    document.getElementById(
+      'successOverlay'
+    );
+
+  const codeElement =
+    document.getElementById(
+      'successCode'
+    );
+
+  codeElement.textContent =
+    code;
+
+  overlay.style.display =
+    'flex';
+
+  setTimeout(
+    function() {
+
+      overlay.style.display =
+        'none';
+
+    },
+    1000
+  );
+
+}
+
+
+/* =================================================
+   GAS通信
+================================================= */
+
+function sendToGAS(
+  action,
+  jan,
+  extraParams = {}
+) {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      const callbackName =
+        'gasCallback_' +
+        Date.now() +
+        '_' +
+        Math.floor(
+          Math.random() * 100000
+        );
+
+
+      const script =
+        document.createElement(
+          'script'
+        );
+
+
+      let finished =
+        false;
+
+
+      /*
+       * GASからの返答
+       */
+
+      window[callbackName] =
+        function(result) {
+
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+
+          console.log(
+            'GAS返答:',
+            result
+          );
+
+          delete window[
+            callbackName
+          ];
+
+          script.remove();
+
+          resolve(result);
+
+        };
+
+
+      /*
+       * 通信エラー
+       */
+
+      script.onerror =
+        function() {
+
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+
+          delete window[
+            callbackName
+          ];
+
+          script.remove();
+
+          reject(
+            new Error(
+              'GASとの通信に失敗しました'
+            )
+          );
+
+        };
+
+
+      /*
+       * URL
+       */
+
+      let url =
+        GAS_URL +
+        '?action=' +
+        encodeURIComponent(
+          action
+        ) +
+        '&code=' +
+        encodeURIComponent(
+          jan
+        ) +
+        '&callback=' +
+        encodeURIComponent(
+          callbackName
+        );
+
+
+      /*
+       * 追加パラメータ
+       */
+
+      for (
+        const key in extraParams
+      ) {
+
+        url +=
+          '&' +
+          encodeURIComponent(key) +
+          '=' +
+          encodeURIComponent(
+            extraParams[key]
+          );
+
+      }
+
+
+      console.log(
+        'GAS送信:',
+        url
+      );
+
+
+      script.src =
+        url;
+
+
+      document
+        .body
+        .appendChild(
+          script
+        );
+
+    }
+  );
+
+}
+
+
+/* =================================================
+   商品情報表示
+================================================= */
+
+function displayProduct(
+  result
+) {
+
+  currentProduct =
+    result;
+
+
+  document
+    .getElementById(
+      'productName'
+    )
+    .textContent =
+      result.name;
+
+
+  document
+    .getElementById(
+      'packCount'
+    )
+    .textContent =
+      result.packCount;
+
+
+  document
+    .getElementById(
+      'perPack'
+    )
+    .textContent =
+      result.perPack;
+
+
+  document
+    .getElementById(
+      'remainderInput'
+    )
+    .value =
+      result.remainder;
+
+
+  document
+    .getElementById(
+      'total'
+    )
+    .textContent =
+      result.total;
+
+
+  document
+    .getElementById(
+      'remainderArea'
+    )
+    .style.display =
+      'block';
+
+
+  document
+    .getElementById(
+      'totalArea'
+    )
+    .style.display =
+      'block';
+
+
+  updateTotal();
 
 
   /*
-   * 数値チェック
+   * 端数入力欄を選択
+   */
+
+  const input =
+    document.getElementById(
+      'remainderInput'
+    );
+
+  input.focus();
+
+  input.select();
+
+}
+
+
+/* =================================================
+   合計計算
+================================================= */
+
+function updateTotal() {
+
+  if (!currentProduct) {
+    return;
+  }
+
+
+  const input =
+    document.getElementById(
+      'remainderInput'
+    );
+
+
+  const value =
+    input.value;
+
+
+  /*
+   * 空欄の場合
+   */
+  if (value === '') {
+
+    const total =
+      currentProduct.packCount *
+      currentProduct.perPack;
+
+
+    document
+      .getElementById(
+        'total'
+      )
+      .textContent =
+      total;
+
+    return;
+
+  }
+
+
+  const remainder =
+    Number(value);
+
+
+  if (
+    !Number.isFinite(
+      remainder
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  const total =
+    (
+      currentProduct.packCount *
+      currentProduct.perPack
+    ) +
+    remainder;
+
+
+  document
+    .getElementById(
+      'total'
+    )
+    .textContent =
+    total;
+
+}
+
+
+/* =================================================
+   端数入力変更
+================================================= */
+
+document
+  .getElementById(
+    'remainderInput'
+  )
+  .addEventListener(
+    'input',
+    updateTotal
+  );
+
+
+/* =================================================
+   端数確定
+================================================= */
+
+async function confirmRemainder() {
+
+  if (!currentJAN) {
+
+    showMessage(
+      '先にバーコードを読み取ってください。',
+      true
+    );
+
+    return;
+
+  }
+
+
+  if (!currentProduct) {
+
+    showMessage(
+      '商品情報がありません。',
+      true
+    );
+
+    return;
+
+  }
+
+
+  const input =
+    document.getElementById(
+      'remainderInput'
+    );
+
+
+  /*
+   * 空欄チェック
    */
 
   if (
-    !Number.isFinite(remainder)
+    input.value === ''
   ) {
 
-    throw new Error(
-      '端数を正しく入力してください。'
+    showMessage(
+      '端数を入力してください。',
+      true
     );
 
+    input.focus();
+
+    return;
+
   }
+
+
+  const remainder =
+    Number(
+      input.value
+    );
 
 
   /*
@@ -476,584 +992,541 @@ function setRemainder(
    */
 
   if (
-    !Number.isInteger(remainder)
+    !Number.isInteger(
+      remainder
+    )
   ) {
 
-    throw new Error(
-      '端数は整数で入力してください。'
+    showMessage(
+      '端数は整数で入力してください。',
+      true
     );
+
+    input.focus();
+
+    return;
 
   }
 
 
   /*
-   * マイナスは禁止
+   * マイナス禁止
    *
-   * 上限は設けない
+   * ★上限はありません
    */
 
   if (
     remainder < 0
   ) {
 
-    throw new Error(
-      '端数は0以上で入力してください。'
+    showMessage(
+      '端数は0以上で入力してください。',
+      true
     );
 
-  }
+    input.focus();
 
-
-  const sheet =
-    getStockSheet();
-
-
-  const values =
-    sheet
-      .getDataRange()
-      .getValues();
-
-
-  /*
-   * JAN検索
-   */
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-    const code =
-      String(
-        values[i][0]
-      ).trim();
-
-
-    if (code !== jan) {
-
-      continue;
-
-    }
-
-
-    const row =
-      i + 1;
-
-
-    const name =
-      values[i][1];
-
-
-    const packCount =
-      Number(
-        values[i][2]
-      ) || 0;
-
-
-    const perPack =
-      Number(
-        values[i][3]
-      ) || 0;
-
-
-    /*
-     * E列
-     *
-     * 端数を保存
-     */
-
-    sheet
-      .getRange(
-        row,
-        5
-      )
-      .setValue(
-        remainder
-      );
-
-
-    /*
-     * F列
-     *
-     * 合計
-     */
-
-    const total =
-      (
-        packCount *
-        perPack
-      ) +
-      remainder;
-
-
-    sheet
-      .getRange(
-        row,
-        6
-      )
-      .setValue(
-        total
-      );
-
-
-    /*
-     * 履歴シート
-     */
-
-    const ss =
-      SpreadsheetApp.openById(
-        SPREADSHEET_ID
-      );
-
-
-    const historySheet =
-      ss.getSheetByName(
-        HISTORY_SHEET_NAME
-      );
-
-
-    if (historySheet) {
-
-      historySheet.appendRow([
-
-        new Date(),
-
-        jan,
-
-        name,
-
-        '端数変更',
-
-        remainder,
-
-        total
-
-      ]);
-
-    }
-
-
-    /*
-     * 結果
-     */
-
-    return {
-
-      success: true,
-
-      code:
-        jan,
-
-      name:
-        name,
-
-      packCount:
-        packCount,
-
-      perPack:
-        perPack,
-
-      remainder:
-        remainder,
-
-      total:
-        total
-
-    };
+    return;
 
   }
 
 
-  /*
-   * JANが見つからない
-   */
-
-  return {
-
-    success: false,
-
-    notFound: true,
-
-    message:
-      '登録されていないJANコードです。',
-
-    code:
-      jan
-
-  };
-
-}
+  const button =
+    document.getElementById(
+      'confirmButton'
+    );
 
 
-/* =================================================
-   入庫・使用
-================================================= */
-
-function updateStock(
-  jan,
-  mode
-) {
-
-  jan =
-    String(jan).trim();
+  button.disabled =
+    true;
 
 
-  mode =
-    String(mode).trim();
+  showMessage(
+    '端数を保存しています…'
+  );
 
 
-  const sheet =
-    getStockSheet();
+  try {
+
+    /*
+     * GASへ端数を送信
+     */
+
+    const result =
+      await sendToGAS(
+
+        'setRemainder',
+
+        currentJAN,
+
+        {
+          remainder:
+            remainder
+        }
+
+      );
 
 
-  const values =
-    sheet
-      .getDataRange()
-      .getValues();
-
-
-  /*
-   * JAN検索
-   */
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-    const code =
-      String(
-        values[i][0]
-      ).trim();
-
-
-    if (code !== jan) {
-
-      continue;
-
-    }
-
-
-    const row =
-      i + 1;
-
-
-    const name =
-      values[i][1];
-
-
-    let packCount =
-      Number(
-        values[i][2]
-      ) || 0;
-
-
-    const perPack =
-      Number(
-        values[i][3]
-      ) || 0;
-
-
-    const remainder =
-      Number(
-        values[i][4]
-      ) || 0;
+    console.log(
+      '端数保存結果:',
+      result
+    );
 
 
     /*
-     * 入庫
+     * エラー
      */
 
     if (
-      mode === 'in'
+      !result.success
     ) {
 
-      packCount++;
-
-    }
-
-
-    /*
-     * 使用
-     */
-
-    else if (
-      mode === 'out'
-    ) {
-
-      if (
-        packCount <= 0
-      ) {
-
-        return {
-
-          success: false,
-
-          message:
-            'パック数が0なので減らせません。',
-
-          name:
-            name,
-
-          packCount:
-            packCount,
-
-          perPack:
-            perPack,
-
-          remainder:
-            remainder,
-
-          total:
-            (
-              packCount *
-              perPack
-            ) +
-            remainder
-
-        };
-
-      }
-
-
-      packCount--;
-
-    }
-
-
-    else {
-
-      throw new Error(
-        'modeが不正です。'
+      showMessage(
+        result.message ||
+        '保存できませんでした。',
+        true
       );
 
+      return;
+
     }
 
 
     /*
-     * C列
-     *
-     * パック数
+     * 最新情報を表示
      */
 
-    sheet
-      .getRange(
-        row,
-        3
+    document
+      .getElementById(
+        'productName'
       )
-      .setValue(
-        packCount
-      );
+      .textContent =
+      result.name;
 
 
-    /*
-     * F列
-     *
-     * 合計
-     */
-
-    const total =
-      (
-        packCount *
-        perPack
-      ) +
-      remainder;
-
-
-    sheet
-      .getRange(
-        row,
-        6
+    document
+      .getElementById(
+        'packCount'
       )
-      .setValue(
-        total
-      );
+      .textContent =
+      result.packCount;
+
+
+    document
+      .getElementById(
+        'perPack'
+      )
+      .textContent =
+      result.perPack;
+
+
+    document
+      .getElementById(
+        'remainderInput'
+      )
+      .value =
+      result.remainder;
+
+
+    document
+      .getElementById(
+        'total'
+      )
+      .textContent =
+      result.total;
 
 
     /*
-     * 履歴
+     * 商品情報を更新
      */
 
-    const ss =
-      SpreadsheetApp.openById(
-        SPREADSHEET_ID
-      );
-
-
-    const historySheet =
-      ss.getSheetByName(
-        HISTORY_SHEET_NAME
-      );
-
-
-    if (historySheet) {
-
-      historySheet.appendRow([
-
-        new Date(),
-
-        jan,
-
-        name,
-
-        mode === 'in'
-          ? '入庫'
-          : '使用',
-
-        mode === 'in'
-          ? 1
-          : -1,
-
-        total
-
-      ]);
-
-    }
+    currentProduct =
+      result;
 
 
     /*
-     * 結果
+     * 完了表示
      */
 
-    return {
+    showMessage(
+      '✓ 入力完了'
+    );
 
-      success: true,
 
-      code:
-        jan,
+  }
 
-      name:
-        name,
+  catch (error) {
 
-      packCount:
-        packCount,
+    console.error(
+      error
+    );
 
-      perPack:
-        perPack,
+    showMessage(
+      error.message,
+      true
+    );
 
-      remainder:
-        remainder,
+  }
 
-      total:
-        total
+  finally {
 
-    };
+    button.disabled =
+      false;
 
+  }
+
+}
+
+
+/* =================================================
+   JAN読み取り成功
+================================================= */
+
+async function onScanSuccess(
+  decodedText
+) {
+
+  const now =
+    Date.now();
+
+
+  /*
+   * 処理中なら無視
+   */
+
+  if (processing) {
+    return;
   }
 
 
   /*
-   * JANが見つからない
+   * 同じJANの連続読み取り防止
    */
 
-  return {
+  if (
 
-    success: false,
+    decodedText === lastCode &&
 
-    notFound: true,
+    now - lastScanTime < 2000
 
-    message:
-      '登録されていないJANコードです。',
+  ) {
 
-    code:
-      jan
+    return;
 
-  };
-
-}
+  }
 
 
-/* =================================================
-   接続テスト
-================================================= */
+  lastCode =
+    decodedText;
 
-function testConnection() {
+  lastScanTime =
+    now;
 
-  const ss =
-    SpreadsheetApp.openById(
-      SPREADSHEET_ID
-    );
+  processing =
+    true;
 
-
-  const stockSheet =
-    ss.getSheetByName(
-      STOCK_SHEET_NAME
-    );
+  currentJAN =
+    decodedText;
 
 
-  const historySheet =
-    ss.getSheetByName(
-      HISTORY_SHEET_NAME
-    );
-
-
-  Logger.log(
-    'スプレッドシート：' +
-    ss.getName()
+  console.log(
+    'JAN読み取り:',
+    decodedText
   );
 
 
-  Logger.log(
-    '在庫シート：' +
-    (
-      stockSheet
-        ? 'OK'
-        : 'なし'
-    )
+  /*
+   * 成功表示
+   */
+
+  showSuccessOverlay(
+    decodedText
   );
 
 
-  Logger.log(
-    '履歴シート：' +
-    (
-      historySheet
-        ? 'OK'
-        : 'なし'
-    )
+  showMessage(
+    '読み取り成功。商品情報を取得しています…'
   );
 
-}
+
+  try {
+
+    /*
+     * 商品検索
+     */
+
+    const result =
+      await sendToGAS(
+
+        'getProduct',
+
+        decodedText
+
+      );
 
 
-/* =================================================
-   商品検索テスト
-================================================= */
-
-function testGetProduct() {
-
-  const result =
-    getProduct(
-      '4902102158169'
-    );
-
-
-  Logger.log(
-    JSON.stringify(
+    console.log(
+      '商品検索結果:',
       result
-    )
-  );
+    );
+
+
+    /*
+     * 商品がない
+     */
+
+    if (
+      !result.success
+    ) {
+
+      document
+        .getElementById(
+          'productName'
+        )
+        .textContent =
+        result.message ||
+        '商品が見つかりません';
+
+
+      showMessage(
+        result.message ||
+        '商品が見つかりません。',
+        true
+      );
+
+      return;
+
+    }
+
+
+    /*
+     * 商品情報表示
+     */
+
+    displayProduct(
+      result
+    );
+
+
+    showMessage(
+      '端数を入力して「確定」を押してください'
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      error
+    );
+
+    showMessage(
+      error.message,
+      true
+    );
+
+  }
+
+  finally {
+
+    setTimeout(
+      function() {
+
+        processing =
+          false;
+
+      },
+      500
+    );
+
+  }
 
 }
 
 
 /* =================================================
-   端数保存テスト
+   カメラ起動
 ================================================= */
 
-function testSetRemainder() {
+async function startScanner() {
 
-  const result =
-    setRemainder(
-      '4902102158169',
-      5
+  try {
+
+    showMessage(
+      'カメラを起動しています…'
     );
 
 
-  Logger.log(
-    JSON.stringify(
-      result
-    )
-  );
+    scanner =
+      new Html5Qrcode(
+        'reader'
+      );
+
+
+    /*
+     * カメラ一覧
+     */
+
+    const cameras =
+      await Html5Qrcode
+        .getCameras();
+
+
+    if (
+      !cameras ||
+      cameras.length === 0
+    ) {
+
+      throw new Error(
+        'カメラが見つかりません'
+      );
+
+    }
+
+
+    /*
+     * 最初のカメラ
+     */
+
+    let cameraId =
+      cameras[0].id;
+
+
+    /*
+     * 背面カメラ優先
+     */
+
+    for (
+      const camera
+      of cameras
+    ) {
+
+      const label =
+        (
+          camera.label ||
+          ''
+        ).toLowerCase();
+
+
+      if (
+
+        label.includes('back') ||
+
+        label.includes('rear') ||
+
+        label.includes('environment') ||
+
+        label.includes('背面')
+
+      ) {
+
+        cameraId =
+          camera.id;
+
+        break;
+
+      }
+
+    }
+
+
+    /*
+     * カメラ開始
+     */
+
+    await scanner.start(
+
+      cameraId,
+
+      {
+
+        fps: 10,
+
+        qrbox: {
+
+          width: 300,
+
+          height: 150
+
+        },
+
+        formatsToSupport: [
+
+          Html5QrcodeSupportedFormats
+            .EAN_13,
+
+          Html5QrcodeSupportedFormats
+            .EAN_8,
+
+          Html5QrcodeSupportedFormats
+            .UPC_A
+
+        ]
+
+      },
+
+
+      /*
+       * 読み取り成功
+       */
+
+      onScanSuccess,
+
+
+      /*
+       * 読み取り失敗
+       */
+
+      function() {
+
+        // 無視
+
+      }
+
+    );
+
+
+    showMessage(
+      '📷 バーコードを映してください'
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      error
+    );
+
+    showMessage(
+
+      'カメラを起動できません：' +
+      error.message,
+
+      true
+
+    );
+
+  }
 
 }
+
+
+/* =================================================
+   ページ読み込み
+================================================= */
+
+window.addEventListener(
+  'load',
+  function() {
+
+    startScanner();
+
+  }
+);
+
+</script>
+
+</body>
+</html>
+```
