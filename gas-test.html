@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GAS通信テスト</title>
+</head>
+
+<body>
+
+<h1>GAS通信テスト</h1>
+
+<button onclick="testGAS()">
+  GAS通信テスト
+</button>
+
+<div id="result">
+  未実行
+</div>
+
+
+<script>
+
+const GAS_URL =
+  'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec';
+
+
+function testGAS() {
+
+  const callbackName =
+    'gasCallback_' +
+    Date.now();
+
+
+  const script =
+    document.createElement('script');
+
+
+  window[callbackName] =
+    function(result) {
+
+      document.getElementById(
+        'result'
+      ).textContent =
+        JSON.stringify(
+          result,
+          null,
+          2
+        );
+
+
+      delete window[
+        callbackName
+      ];
+
+
+      script.remove();
+
+    };
+
+
+  const url =
+    GAS_URL +
+    '?callback=' +
+    callbackName;
+
+
+  document
+    .body
+    .appendChild(script);
+
+
+  script.src = url;
+
+}
+
+</script>
+
+</body>
+</html>
