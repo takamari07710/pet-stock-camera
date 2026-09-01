@@ -230,110 +230,56 @@ function showMessage(
    GAS通信
 ========================= */
 
-function sendToGAS(jan) {
+async function testGAS() {
 
-  return new Promise(
-    function(resolve, reject) {
-
-      const callbackName =
-        'gasCallback_' +
-        Date.now() +
-        '_' +
-        Math.floor(
-          Math.random() * 100000
-        );
-
-      const script =
-        document.createElement(
-          'script'
-        );
-
-
-      let finished = false;
-
-
-      window[callbackName] =
-        function(result) {
-
-          finished = true;
-
-          delete window[
-            callbackName
-          ];
-
-          if (
-            script.parentNode
-          ) {
-
-            script.parentNode
-              .removeChild(script);
-
-          }
-
-          resolve(result);
-
-        };
-
-
-      const url =
-        GAS_URL +
-        '?code=' +
-        encodeURIComponent(jan) +
-        '&mode=' +
-        encodeURIComponent(mode) +
-        '&callback=' +
-        callbackName;
-
-
-      console.log(
-        'GAS送信:',
-        url
-      );
-
-
-      script.onerror =
-        function() {
-
-          if (finished) {
-            return;
-          }
-
-          finished = true;
-
-          delete window[
-            callbackName
-          ];
-
-          if (
-            script.parentNode
-          ) {
-
-            script.parentNode
-              .removeChild(script);
-
-          }
-
-          reject(
-            new Error(
-              'GASとの通信に失敗しました'
-            )
-          );
-
-        };
-
-
-      document.body.appendChild(
-        script
-      );
-
-      script.src = url;
-
-    }
+  showMessage(
+    'GASへテスト送信しています…'
   );
 
+  try {
+
+    const result =
+      await sendToGAS(
+        '4902102158169'
+      );
+
+    console.log(
+      'GASテスト結果:',
+      result
+    );
+
+    if (result.success) {
+
+      showMessage(
+        '通信成功：' +
+        result.name +
+        ' / 在庫 ' +
+        result.stock
+      );
+
+    } else {
+
+      showMessage(
+        'GAS応答あり：' +
+        result.message,
+        true
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+    showMessage(
+      '通信エラー：' +
+      error.message,
+      true
+    );
+
+  }
+
 }
-
-
 /* =========================
    JAN読み取り成功
 ========================= */
