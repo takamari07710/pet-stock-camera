@@ -15,9 +15,11 @@
 
     body {
       font-family: sans-serif;
+      margin: 0;
       padding: 20px;
-      text-align: center;
       background: #f5f5f5;
+      color: #222;
+      text-align: center;
     }
 
     h1 {
@@ -75,6 +77,7 @@
     #warning {
       color: #d32f2f;
       font-weight: bold;
+      margin-top: 10px;
     }
 
     #message {
@@ -99,6 +102,10 @@
 <h1>🐾 ペットシーツ在庫</h1>
 
 
+<!-- =========================
+     入庫 / 使用
+========================= -->
+
 <div class="mode">
 
   <button
@@ -121,8 +128,16 @@
 </div>
 
 
+<!-- =========================
+     カメラ
+========================= -->
+
 <div id="reader"></div>
 
+
+<!-- =========================
+     商品情報
+========================= -->
 
 <div class="result">
 
@@ -139,6 +154,10 @@
 </div>
 
 
+<!-- =========================
+     メッセージ
+========================= -->
+
 <div id="message">
   カメラを準備しています…
 </div>
@@ -146,17 +165,18 @@
 
 <script>
 
-/* =========================
-   GAS URL
-========================= */
+
+/* ==================================================
+   GAS WebアプリURL
+================================================== */
 
 const GAS_URL =
   'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec';
 
 
-/* =========================
+/* ==================================================
    変数
-========================= */
+================================================== */
 
 let scanner = null;
 
@@ -169,13 +189,14 @@ let lastCode = '';
 let lastScanTime = 0;
 
 
-/* =========================
-   モード変更
-========================= */
+/* ==================================================
+   入庫 / 使用切り替え
+================================================== */
 
 function setMode(newMode) {
 
   mode = newMode;
+
 
   document
     .getElementById('inButton')
@@ -185,6 +206,7 @@ function setMode(newMode) {
       mode === 'in'
     );
 
+
   document
     .getElementById('outButton')
     .classList
@@ -193,18 +215,21 @@ function setMode(newMode) {
       mode === 'out'
     );
 
+
   showMessage(
+
     mode === 'in'
       ? '＋ 入庫モード'
       : '− 使用モード'
+
   );
 
 }
 
 
-/* =========================
-   メッセージ
-========================= */
+/* ==================================================
+   メッセージ表示
+================================================== */
 
 function showMessage(
   text,
@@ -216,7 +241,10 @@ function showMessage(
       'message'
     );
 
-  element.textContent = text;
+
+  element.textContent =
+    text;
+
 
   element.className =
     error
@@ -226,63 +254,150 @@ function showMessage(
 }
 
 
-/* =========================
+/* ==================================================
    GAS通信
-========================= */
+================================================== */
 
-async function testGAS() {
+function sendToGAS(jan) {
 
-  showMessage(
-    'GASへテスト送信しています…'
-  );
+  return new Promise(
+    function(resolve, reject) {
 
-  try {
+      /*
+       * JSONP用の関数名
+       */
+      const callbackName =
+        'gasCallback_' +
+        Date.now() +
+        '_' +
+        Math.floor(
+          Math.random() * 100000
+        );
 
-    const result =
-      await sendToGAS(
-        '4902102158169'
+
+      /*
+       * scriptタグ
+       */
+      const script =
+        document.createElement(
+          'script'
+        );
+
+
+      /*
+       * GASから返ってくる関数
+       */
+      window[callbackName] =
+        function(result) {
+
+          console.log(
+            'GASから受信：',
+            result
+          );
+
+
+          delete window[
+            callbackName
+          ];
+
+
+          if (
+            script.parentNode
+          ) {
+
+            script.parentNode
+              .removeChild(script);
+
+          }
+
+
+          resolve(result);
+
+        };
+
+
+      /*
+       * GAS URL
+       */
+      const url =
+        GAS_URL +
+        '?code=' +
+        encodeURIComponent(
+          jan
+        ) +
+        '&mode=' +
+        encodeURIComponent(
+          mode
+        ) +
+        '&callback=' +
+        encodeURIComponent(
+          callbackName
+        );
+
+
+      console.log(
+        'GASへ送信：',
+        url
       );
 
-    console.log(
-      'GASテスト結果:',
-      result
-    );
 
-    if (result.success) {
+      /*
+       * エラー
+       */
+      script.onerror =
+        function() {
 
-      showMessage(
-        '通信成功：' +
-        result.name +
-        ' / 在庫 ' +
-        result.stock
-      );
+          console.error(
+            'GAS通信エラー'
+          );
 
-    } else {
 
-      showMessage(
-        'GAS応答あり：' +
-        result.message,
-        true
-      );
+          delete window[
+            callbackName
+          ];
+
+
+          if (
+            script.parentNode
+          ) {
+
+            script.parentNode
+              .removeChild(script);
+
+          }
+
+
+          reject(
+            new Error(
+              'GASとの通信に失敗しました'
+            )
+          );
+
+        };
+
+
+      /*
+       * GASを呼び出す
+       */
+      script.src =
+        url;
+
+
+      document
+        .body
+        .appendChild(
+          script
+        );
 
     }
-
-  } catch (error) {
-
-    console.error(error);
-
-    showMessage(
-      '通信エラー：' +
-      error.message,
-      true
-    );
-
-  }
+  );
 
 }
-/* =========================
+
+
+/* ==================================================
    JAN読み取り成功
-========================= */
+================================================== */
 
 async function onScanSuccess(
   decodedText
@@ -293,14 +408,20 @@ async function onScanSuccess(
 
 
   /*
-   * 連続読み取り防止
+   * 処理中なら無視
    */
+  if (
+    processing
+  ) {
 
-  if (processing) {
     return;
+
   }
 
 
+  /*
+   * 同じJANの連続読み取り防止
+   */
   if (
     decodedText === lastCode &&
     now - lastScanTime < 2000
@@ -314,19 +435,20 @@ async function onScanSuccess(
   lastCode =
     decodedText;
 
+
   lastScanTime =
     now;
+
 
   processing =
     true;
 
 
   /*
-   * 読み取り確認
+   * JAN読み取り確認
    */
-
   showMessage(
-    '読み取り：' +
+    '読み取り成功：' +
     decodedText
   );
 
@@ -334,9 +456,8 @@ async function onScanSuccess(
   try {
 
     /*
-     * GASへ送信
+     * GAS送信
      */
-
     showMessage(
       'GASへ送信しています…'
     );
@@ -349,15 +470,14 @@ async function onScanSuccess(
 
 
     console.log(
-      'GAS結果:',
+      'GAS結果：',
       result
     );
 
 
     /*
-     * GASエラー
+     * GAS側エラー
      */
-
     if (
       !result.success
     ) {
@@ -371,19 +491,35 @@ async function onScanSuccess(
           'エラー';
 
 
-      document
-        .getElementById(
-          'stock'
-        )
-        .textContent =
-          result.stock !== undefined
-            ? result.stock + ' パック'
-            : '-';
+      if (
+        result.stock !== undefined
+      ) {
+
+        document
+          .getElementById(
+            'stock'
+          )
+          .textContent =
+            result.stock +
+            ' パック';
+
+      }
+
+      else {
+
+        document
+          .getElementById(
+            'stock'
+          )
+          .textContent =
+            '-';
+
+      }
 
 
       showMessage(
         result.message ||
-        'エラー',
+        '処理できませんでした',
         true
       );
 
@@ -396,7 +532,6 @@ async function onScanSuccess(
     /*
      * 商品名
      */
-
     document
       .getElementById(
         'productName'
@@ -408,7 +543,6 @@ async function onScanSuccess(
     /*
      * 在庫
      */
-
     document
       .getElementById(
         'stock'
@@ -419,9 +553,8 @@ async function onScanSuccess(
 
 
     /*
-     * 最低在庫
+     * 最低在庫警告
      */
-
     if (
       result.stock <=
       result.minStock
@@ -449,9 +582,8 @@ async function onScanSuccess(
 
 
     /*
-     * 完了
+     * 成功メッセージ
      */
-
     if (
       mode === 'in'
     ) {
@@ -475,9 +607,13 @@ async function onScanSuccess(
 
   catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
+
 
     showMessage(
+      'エラー：' +
       error.message,
       true
     );
@@ -487,6 +623,9 @@ async function onScanSuccess(
 
   finally {
 
+    /*
+     * 1秒後に次の読み取りを許可
+     */
     setTimeout(
       function() {
 
@@ -502,9 +641,9 @@ async function onScanSuccess(
 }
 
 
-/* =========================
+/* ==================================================
    カメラ起動
-========================= */
+================================================== */
 
 async function startScanner() {
 
@@ -515,6 +654,9 @@ async function startScanner() {
     );
 
 
+    /*
+     * スキャナー作成
+     */
     scanner =
       new Html5Qrcode(
         'reader'
@@ -522,9 +664,8 @@ async function startScanner() {
 
 
     /*
-     * カメラ一覧
+     * カメラ一覧取得
      */
-
     const cameras =
       await Html5Qrcode
         .getCameras();
@@ -545,15 +686,13 @@ async function startScanner() {
     /*
      * 最初のカメラ
      */
-
     let cameraId =
       cameras[0].id;
 
 
     /*
-     * 背面カメラ優先
+     * 背面カメラを優先
      */
-
     for (
       const camera
       of cameras
@@ -567,10 +706,23 @@ async function startScanner() {
 
 
       if (
-        label.includes('back') ||
-        label.includes('rear') ||
-        label.includes('environment') ||
-        label.includes('背面')
+
+        label.includes(
+          'back'
+        ) ||
+
+        label.includes(
+          'rear'
+        ) ||
+
+        label.includes(
+          'environment'
+        ) ||
+
+        label.includes(
+          '背面'
+        )
+
       ) {
 
         cameraId =
@@ -586,7 +738,6 @@ async function startScanner() {
     /*
      * カメラ開始
      */
-
     await scanner.start(
 
       cameraId,
@@ -618,17 +769,16 @@ async function startScanner() {
 
       },
 
-      /*
-       * 読み取り成功
-       */
 
+      /*
+       * JAN読み取り成功
+       */
       onScanSuccess,
 
 
       /*
        * 読み取り失敗
        */
-
       function() {
 
         // 無視
@@ -647,7 +797,10 @@ async function startScanner() {
 
   catch (error) {
 
-    console.error(error);
+    console.error(
+      error
+    );
+
 
     showMessage(
       'カメラを起動できません：' +
@@ -660,9 +813,9 @@ async function startScanner() {
 }
 
 
-/* =========================
-   起動
-========================= */
+/* ==================================================
+   ページ読み込み
+================================================== */
 
 window.addEventListener(
   'load',
