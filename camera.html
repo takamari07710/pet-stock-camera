@@ -1,3 +1,392 @@
+const SPREADSHEET_ID =
+  '1fRlCfjLEDqovtA6UZDIgiHSWLhvcpdpfa9HTmhFsLlE';
+
+const STOCK_SHEET_NAME =
+  'ペットシーツ在庫';
+
+const HISTORY_SHEET_NAME =
+  '履歴';
+
+
+/* =================================================
+   Webアプリ
+================================================= */
+
+function doGet(e) {
+
+  const action =
+    e &&
+    e.parameter &&
+    e.parameter.action
+      ? String(e.parameter.action)
+      : '';
+
+  /*
+   * GitHub PagesからのAPI通信
+   */
+  if (action) {
+
+    return api(e);
+
+  }
+
+  /*
+   * GAS側で直接開いた場合
+   */
+  return HtmlService
+    .createHtmlOutput(
+      'ペットシーツ在庫API'
+    );
+
+}
+
+
+/* =================================================
+   API
+================================================= */
+
+function api(e) {
+
+  const callback =
+    createSafeCallback(
+      e.parameter.callback
+    );
+
+  let result;
+
+
+  try {
+
+    const action =
+      String(
+        e.parameter.action || ''
+      ).trim();
+
+
+    const jan =
+      String(
+        e.parameter.code || ''
+      ).trim();
+
+
+    if (!jan) {
+
+      result = {
+
+        success: false,
+
+        message:
+          'JANコードがありません。'
+
+      };
+
+    }
+
+    /*
+     * 商品情報取得
+     */
+    else if (
+      action === 'getProduct'
+    ) {
+
+      result =
+        getProduct(jan);
+
+    }
+
+    /*
+     * 端数保存
+     */
+    else if (
+      action === 'setRemainder'
+    ) {
+
+      const remainder =
+        Number(
+          e.parameter.remainder
+        );
+
+      result =
+        setRemainder(
+          jan,
+          remainder
+        );
+
+    }
+
+    /*
+     * 入庫・使用
+     */
+    else if (
+      action === 'updateStock'
+    ) {
+
+      const mode =
+        String(
+          e.parameter.mode || 'in'
+        ).trim();
+
+      result =
+        updateStock(
+          jan,
+          mode
+        );
+
+    }
+
+    else {
+
+      result = {
+
+        success: false,
+
+        message:
+          '不正なactionです。'
+
+      };
+
+    }
+
+
+  }
+  catch (error) {
+
+    result = {
+
+      success: false,
+
+      message:
+        error.message
+
+    };
+
+  }
+
+
+  /*
+   * JANコードを返す
+   */
+
+  result.code =
+    String(
+      e.parameter.code || ''
+    ).trim();
+
+
+  /*
+   * JSONP
+   */
+
+  const output =
+    callback +
+    '(' +
+    JSON.stringify(result) +
+    ');';
+
+
+  return ContentService
+    .createTextOutput(
+      output
+    )
+    .setMimeType(
+      ContentService.MimeType.JAVASCRIPT
+    );
+
+}
+
+
+/* =================================================
+   callback安全化
+================================================= */
+
+function createSafeCallback(callback) {
+
+  callback =
+    String(
+      callback || 'callback'
+    );
+
+
+  if (
+    !/^[a-zA-Z_$][0-9a-zA-Z_$]*$/
+      .test(callback)
+  ) {
+
+    return 'callback';
+
+  }
+
+
+  return callback;
+
+}
+
+
+/* =================================================
+   スプレッドシート取得
+================================================= */
+
+function getStockSheet() {
+
+  const ss =
+    SpreadsheetApp.openById(
+      SPREADSHEET_ID
+    );
+
+
+  const sheet =
+    ss.getSheetByName(
+      STOCK_SHEET_NAME
+    );
+
+
+  if (!sheet) {
+
+    throw new Error(
+      '「' +
+      STOCK_SHEET_NAME +
+      '」シートが見つかりません。'
+    );
+
+  }
+
+
+  return sheet;
+
+}
+
+
+/* =================================================
+   商品検索
+================================================= */
+
+function getProduct(jan) {
+
+  jan =
+    String(jan).trim();
+
+
+  const sheet =
+    getStockSheet();
+
+
+  const values =
+    sheet
+      .getDataRange()
+      .getValues();
+
+
+  /*
+   * A列 = JANコード
+   * B列 = 商品名
+   * C列 = パック数
+   * D列 = 1パックあたり
+   * E列 = 端数
+   * F列 = 合計
+   */
+
+  for (
+    let i = 1;
+    i < values.length;
+    i++
+  ) {
+
+    const code =
+      String(
+        values[i][0]
+      ).trim();
+
+
+    if (code !== jan) {
+
+      continue;
+
+    }
+
+
+    const name =
+      values[i][1];
+
+
+    const packCount =
+      Number(
+        values[i][2]
+      ) || 0;
+
+
+    const perPack =
+      Number(
+        values[i][3]
+      ) || 0;
+
+
+    const remainder =
+      Number(
+        values[i][4]
+      ) || 0;
+
+
+    const total =
+      packCount *
+      perPack +
+      remainder;
+
+
+    /*
+     * F列の合計も修正
+     */
+
+    sheet
+      .getRange(i + 1, 6)
+      .setValue(total);
+
+
+    return {
+
+      success: true,
+
+      code: jan,
+
+      name: name,
+
+      packCount:
+        packCount,
+
+      perPack:
+        perPack,
+
+      remainder:
+        remainder,
+
+      total:
+        total
+
+    };
+
+  }
+
+
+  return {
+
+    success: false,
+
+    notFound: true,
+
+    message:
+      '登録されていないJANコードです。',
+
+    code:
+      jan
+
+  };
+
+}
+
+
+/* =================================================
+   端数保存
+================================================= */
+
 function setRemainder(
   jan,
   remainder
@@ -179,5 +568,313 @@ function setRemainder(
       jan
 
   };
+
+}
+
+/* =================================================
+   入庫・使用
+================================================= */
+
+function updateStock(
+  jan,
+  mode
+) {
+
+  jan =
+    String(jan).trim();
+
+
+  const sheet =
+    getStockSheet();
+
+
+  const values =
+    sheet
+      .getDataRange()
+      .getValues();
+
+
+  for (
+    let i = 1;
+    i < values.length;
+    i++
+  ) {
+
+    const code =
+      String(
+        values[i][0]
+      ).trim();
+
+
+    if (code !== jan) {
+
+      continue;
+
+    }
+
+
+    const row =
+      i + 1;
+
+
+    const name =
+      values[i][1];
+
+
+    let packCount =
+      Number(
+        values[i][2]
+      ) || 0;
+
+
+    const perPack =
+      Number(
+        values[i][3]
+      ) || 0;
+
+
+    const remainder =
+      Number(
+        values[i][4]
+      ) || 0;
+
+
+    /*
+     * 入庫
+     */
+
+    if (mode === 'in') {
+
+      packCount++;
+
+    }
+
+
+    /*
+     * 使用
+     */
+
+    else if (mode === 'out') {
+
+      if (packCount <= 0) {
+
+        return {
+
+          success: false,
+
+          message:
+            'パック数が0なので減らせません。',
+
+          name: name,
+
+          packCount:
+            packCount,
+
+          perPack:
+            perPack,
+
+          remainder:
+            remainder,
+
+          total:
+            packCount *
+            perPack +
+            remainder
+
+        };
+
+      }
+
+
+      packCount--;
+
+    }
+
+
+    else {
+
+      throw new Error(
+        'modeが不正です。'
+      );
+
+    }
+
+
+    /*
+     * C列 = パック数
+     */
+
+    sheet
+      .getRange(row, 3)
+      .setValue(
+        packCount
+      );
+
+
+    /*
+     * F列 = 合計
+     */
+
+    const total =
+      packCount *
+      perPack +
+      remainder;
+
+
+    sheet
+      .getRange(row, 6)
+      .setValue(
+        total
+      );
+
+
+    /*
+     * 履歴
+     */
+
+    const historySheet =
+      SpreadsheetApp
+        .getActiveSpreadsheet()
+        .getSheetByName(
+          HISTORY_SHEET_NAME
+        );
+
+
+    if (historySheet) {
+
+      historySheet.appendRow([
+
+        new Date(),
+
+        jan,
+
+        name,
+
+        mode === 'in'
+          ? '入庫'
+          : '使用',
+
+        mode === 'in'
+          ? 1
+          : -1,
+
+        total
+
+      ]);
+
+    }
+
+
+    return {
+
+      success: true,
+
+      code: jan,
+
+      name: name,
+
+      packCount:
+        packCount,
+
+      perPack:
+        perPack,
+
+      remainder:
+        remainder,
+
+      total:
+        total
+
+    };
+
+  }
+
+
+  return {
+
+    success: false,
+
+    notFound: true,
+
+    message:
+      '登録されていないJANコードです。',
+
+    code:
+      jan
+
+  };
+
+}
+
+
+/* =================================================
+   接続テスト
+================================================= */
+
+function testConnection() {
+
+  const ss =
+    SpreadsheetApp.openById(
+      SPREADSHEET_ID
+    );
+
+
+  const stockSheet =
+    ss.getSheetByName(
+      STOCK_SHEET_NAME
+    );
+
+
+  const historySheet =
+    ss.getSheetByName(
+      HISTORY_SHEET_NAME
+    );
+
+
+  Logger.log(
+    'スプレッドシート：' +
+    ss.getName()
+  );
+
+
+  Logger.log(
+    '在庫シート：' +
+    (
+      stockSheet
+        ? 'OK'
+        : 'なし'
+    )
+  );
+
+
+  Logger.log(
+    '履歴シート：' +
+    (
+      historySheet
+        ? 'OK'
+        : 'なし'
+    )
+  );
+
+}
+
+
+/* =================================================
+   APIテスト
+================================================= */
+
+function testGetProduct() {
+
+  const result =
+    getProduct(
+      '4902102158169'
+    );
+
+
+  Logger.log(
+    JSON.stringify(
+      result
+    )
+  );
 
 }
