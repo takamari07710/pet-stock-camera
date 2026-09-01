@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+　<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -7,59 +7,605 @@
     name="viewport"
     content="width=device-width, initial-scale=1">
 
-  <title>カメラテスト</title>
+  <title>ペットシーツ在庫</title>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
+
     body {
       font-family: sans-serif;
       padding: 20px;
       text-align: center;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      font-size: 24px;
+    }
+
+    .mode {
+      display: flex;
+      gap: 10px;
+      max-width: 500px;
+      margin: 20px auto;
+    }
+
+    .mode button {
+      flex: 1;
+      padding: 15px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      background: #ddd;
+    }
+
+    .mode button.active {
+      background: #2196f3;
+      color: white;
     }
 
     #reader {
       width: 100%;
       max-width: 500px;
       margin: auto;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .result {
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 15px;
+      background: white;
+      border-radius: 10px;
+    }
+
+    #productName {
+      font-size: 20px;
+    }
+
+    #stock {
+      font-size: 36px;
+      font-weight: bold;
+      margin: 10px;
+    }
+
+    #warning {
+      color: #d32f2f;
+      font-weight: bold;
     }
 
     #message {
-      margin-top: 20px;
+      max-width: 500px;
+      margin: 20px auto;
       padding: 15px;
+      border-radius: 10px;
+      background: #e8f5e9;
     }
+
+    .error {
+      background: #ffebee !important;
+      color: #c62828;
+    }
+
   </style>
 </head>
 
+
 <body>
 
-<h1>📷 カメラテスト</h1>
+<h1>🐾 ペットシーツ在庫</h1>
+
+
+<!-- 入庫 / 使用 -->
+
+<div class="mode">
+
+  <button
+    id="inButton"
+    class="active"
+    onclick="setMode('in')">
+
+    ＋ 入庫
+
+  </button>
+
+
+  <button
+    id="outButton"
+    onclick="setMode('out')">
+
+    − 使用
+
+  </button>
+
+</div>
+
+
+<!-- カメラ -->
 
 <div id="reader"></div>
+
+
+<!-- 結果 -->
+
+<div class="result">
+
+  <div id="productName">
+    バーコードを読み取ってください
+  </div>
+
+  <div id="stock">
+    -
+  </div>
+
+  <div id="warning"></div>
+
+</div>
+
 
 <div id="message">
   カメラを準備しています…
 </div>
 
+
 <script>
 
+
+/* =================================================
+   GAS WebアプリURL
+================================================= */
+
+/*
+ * ★ここを自分のGAS WebアプリURLに変更
+ *
+ * 例：
+ * https://script.google.com/macros/s/XXXXXXXX/exec
+ */
+
+const GAS_URL =
+  'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec';
+
+
+/* =================================================
+   変数
+================================================= */
+
 let scanner = null;
+
+let mode = 'in';
+
+let processing = false;
+
+let lastCode = '';
+
+let lastScanTime = 0;
+
+
+/* =================================================
+   入庫 / 使用
+================================================= */
+
+function setMode(newMode) {
+
+  mode = newMode;
+
+
+  document
+    .getElementById('inButton')
+    .classList
+    .toggle(
+      'active',
+      mode === 'in'
+    );
+
+
+  document
+    .getElementById('outButton')
+    .classList
+    .toggle(
+      'active',
+      mode === 'out'
+    );
+
+
+  showMessage(
+
+    mode === 'in'
+      ? '＋ 入庫モード'
+      : '− 使用モード'
+
+  );
+
+}
+
+
+/* =================================================
+   メッセージ
+================================================= */
+
+function showMessage(
+  text,
+  error = false
+) {
+
+  const element =
+    document.getElementById(
+      'message'
+    );
+
+
+  element.textContent =
+    text;
+
+
+  element.className =
+    error
+      ? 'error'
+      : '';
+
+}
+
+
+/* =================================================
+   JSONPでGASを呼び出す
+================================================= */
+
+function sendToGAS(jan) {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      /*
+       * 一意のcallback名
+       */
+      const callbackName =
+        'gasCallback_' +
+        Date.now() +
+        '_' +
+        Math.floor(
+          Math.random() * 100000
+        );
+
+
+      /*
+       * scriptタグ作成
+       */
+      const script =
+        document.createElement(
+          'script'
+        );
+
+
+      /*
+       * callback
+       */
+      window[callbackName] =
+        function(result) {
+
+          /*
+           * 後片付け
+           */
+          delete window[
+            callbackName
+          ];
+
+          if (
+            script.parentNode
+          ) {
+
+            script.parentNode
+              .removeChild(script);
+
+          }
+
+
+          resolve(result);
+
+        };
+
+
+      /*
+       * URL作成
+       */
+      const url =
+        GAS_URL +
+        '?code=' +
+        encodeURIComponent(jan) +
+        '&mode=' +
+        encodeURIComponent(mode) +
+        '&callback=' +
+        encodeURIComponent(
+          callbackName
+        );
+
+
+      /*
+       * GASへアクセス
+       */
+      script.src = url;
+
+
+      /*
+       * 通信エラー
+       */
+      script.onerror =
+        function() {
+
+          delete window[
+            callbackName
+          ];
+
+
+          if (
+            script.parentNode
+          ) {
+
+            script.parentNode
+              .removeChild(script);
+
+          }
+
+
+          reject(
+            new Error(
+              'GASとの通信に失敗しました'
+            )
+          );
+
+        };
+
+
+      document
+        .body
+        .appendChild(script);
+
+    }
+  );
+
+}
+
+
+/* =================================================
+   JAN読み取り成功
+================================================= */
+
+async function onScanSuccess(
+  decodedText
+) {
+
+  const now =
+    Date.now();
+
+
+  /*
+   * 連続読み取り防止
+   */
+  if (
+    processing
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    decodedText === lastCode &&
+    now - lastScanTime < 1500
+  ) {
+
+    return;
+
+  }
+
+
+  lastCode =
+    decodedText;
+
+
+  lastScanTime =
+    now;
+
+
+  processing =
+    true;
+
+
+  showMessage(
+    'JANコードを送信しています…'
+  );
+
+
+  try {
+
+    /*
+     * GASへ送信
+     */
+    const result =
+      await sendToGAS(
+        decodedText
+      );
+
+
+    /*
+     * エラー
+     */
+    if (
+      !result.success
+    ) {
+
+      document
+        .getElementById(
+          'productName'
+        )
+        .textContent =
+          result.message ||
+          'エラー';
+
+
+      document
+        .getElementById(
+          'stock'
+        )
+        .textContent =
+          result.stock ??
+          '-';
+
+
+      showMessage(
+        result.message ||
+        '処理できませんでした',
+        true
+      );
+
+
+      return;
+
+    }
+
+
+    /*
+     * 商品名
+     */
+    document
+      .getElementById(
+        'productName'
+      )
+      .textContent =
+        result.name;
+
+
+    /*
+     * 在庫
+     */
+    document
+      .getElementById(
+        'stock'
+      )
+      .textContent =
+        result.stock +
+        ' パック';
+
+
+    /*
+     * 最低在庫警告
+     */
+    if (
+      result.stock <=
+      result.minStock
+    ) {
+
+      document
+        .getElementById(
+          'warning'
+        )
+        .innerHTML =
+          '⚠ 在庫が少なくなっています';
+
+    }
+
+    else {
+
+      document
+        .getElementById(
+          'warning'
+        )
+        .innerHTML =
+          '';
+
+    }
+
+
+    /*
+     * 成功メッセージ
+     */
+    if (
+      mode === 'in'
+    ) {
+
+      showMessage(
+        '＋ 1パック追加しました'
+      );
+
+    }
+
+    else {
+
+      showMessage(
+        '− 1パック減らしました'
+      );
+
+    }
+
+  }
+
+
+  catch (error) {
+
+    console.error(error);
+
+
+    showMessage(
+      'エラー：' +
+      error.message,
+      true
+    );
+
+  }
+
+
+  finally {
+
+    /*
+     * 少し待ってから
+     * 次の読み取りを許可
+     */
+    setTimeout(
+      function() {
+
+        processing =
+          false;
+
+      },
+      1000
+    );
+
+  }
+
+}
+
+
+/* =================================================
+   カメラ起動
+================================================= */
 
 async function startScanner() {
 
   try {
 
-    document.getElementById('message')
-      .textContent =
-      'カメラを起動しています…';
+    showMessage(
+      'カメラを起動しています…'
+    );
+
 
     scanner =
-      new Html5Qrcode('reader');
+      new Html5Qrcode(
+        'reader'
+      );
+
 
     const cameras =
-      await Html5Qrcode.getCameras();
+      await Html5Qrcode
+        .getCameras();
 
-    if (!cameras || cameras.length === 0) {
+
+    if (
+      !cameras ||
+      cameras.length === 0
+    ) {
 
       throw new Error(
         'カメラが見つかりません'
@@ -67,90 +613,143 @@ async function startScanner() {
 
     }
 
-    let cameraId = cameras[0].id;
 
     /*
      * 背面カメラを優先
      */
-    for (const camera of cameras) {
+    let cameraId =
+      cameras[0].id;
+
+
+    for (
+      const camera
+      of cameras
+    ) {
 
       const label =
-        (camera.label || '').toLowerCase();
+        (
+          camera.label ||
+          ''
+        ).toLowerCase();
+
 
       if (
-        label.includes('back') ||
-        label.includes('rear') ||
-        label.includes('environment') ||
-        label.includes('背面')
+
+        label.includes(
+          'back'
+        ) ||
+
+        label.includes(
+          'rear'
+        ) ||
+
+        label.includes(
+          'environment'
+        ) ||
+
+        label.includes(
+          '背面'
+        )
+
       ) {
 
-        cameraId = camera.id;
+        cameraId =
+          camera.id;
+
         break;
 
       }
 
     }
 
+
+    /*
+     * カメラ開始
+     */
     await scanner.start(
 
       cameraId,
 
       {
+
         fps: 10,
 
         qrbox: {
+
           width: 300,
+
           height: 150
+
         },
 
         formatsToSupport: [
 
-          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats
+            .EAN_13,
 
-          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats
+            .EAN_8,
 
-          Html5QrcodeSupportedFormats.UPC_A
+          Html5QrcodeSupportedFormats
+            .UPC_A
 
         ]
 
       },
 
-      function(decodedText) {
 
-        document.getElementById('message')
-          .textContent =
-          '読み取り：' + decodedText;
+      /*
+       * JAN読み取り成功
+       */
+      onScanSuccess,
 
-      },
 
+      /*
+       * 読み取り失敗
+       */
       function() {
-        // 読み取り失敗は無視
+
+        // 無視
+
       }
 
     );
 
-    document.getElementById('message')
-      .textContent =
-      '📷 バーコードを映してください';
+
+    showMessage(
+      '📷 バーコードを映してください'
+    );
 
   }
+
 
   catch (error) {
 
     console.error(error);
 
-    document.getElementById('message')
-      .textContent =
+
+    showMessage(
       'カメラを起動できません：' +
-      error.message;
+      error.message,
+      true
+    );
 
   }
 
 }
 
+
+/* =================================================
+   ページ読み込み
+================================================= */
+
 window.addEventListener(
   'load',
-  startScanner
+  function() {
+
+    startScanner();
+
+  }
 );
 
 </script>
