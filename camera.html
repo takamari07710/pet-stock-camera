@@ -255,118 +255,101 @@ function showMessage(
 
 function sendToGAS(jan) {
 
-  return new Promise(
-    function(resolve, reject) {
+  return new Promise(function(resolve, reject) {
 
-      /*
-       * 一意のcallback名
-       */
-      const callbackName =
-        'gasCallback_' +
-        Date.now() +
-        '_' +
-        Math.floor(
-          Math.random() * 100000
+    const callbackName =
+      'gasCallback_' +
+      Date.now();
+
+
+    const script =
+      document.createElement('script');
+
+
+    window[callbackName] =
+      function(result) {
+
+        console.log(
+          'GASから受信:',
+          result
         );
 
 
-      /*
-       * scriptタグ作成
-       */
-      const script =
-        document.createElement(
-          'script'
-        );
-
-
-      /*
-       * callback
-       */
-      window[callbackName] =
-        function(result) {
-
-          /*
-           * 後片付け
-           */
-          delete window[
-            callbackName
-          ];
-
-          if (
-            script.parentNode
-          ) {
-
-            script.parentNode
-              .removeChild(script);
-
-          }
-
-
-          resolve(result);
-
-        };
-
-
-      /*
-       * URL作成
-       */
-      const url =
-        GAS_URL +
-        '?code=' +
-        encodeURIComponent(jan) +
-        '&mode=' +
-        encodeURIComponent(mode) +
-        '&callback=' +
-        encodeURIComponent(
+        delete window[
           callbackName
+        ];
+
+
+        if (script.parentNode) {
+
+          script.parentNode
+            .removeChild(script);
+
+        }
+
+
+        resolve(result);
+
+      };
+
+
+    const url =
+      GAS_URL +
+      '?code=' +
+      encodeURIComponent(jan) +
+      '&mode=' +
+      encodeURIComponent(mode) +
+      '&callback=' +
+      callbackName;
+
+
+    console.log(
+      'GASへ送信:',
+      url
+    );
+
+
+    script.src = url;
+
+
+    script.onerror =
+      function() {
+
+        console.error(
+          'GAS通信エラー:',
+          url
         );
 
 
-      /*
-       * GASへアクセス
-       */
-      script.src = url;
+        delete window[
+          callbackName
+        ];
 
 
-      /*
-       * 通信エラー
-       */
-      script.onerror =
-        function() {
+        if (script.parentNode) {
 
-          delete window[
-            callbackName
-          ];
+          script.parentNode
+            .removeChild(script);
+
+        }
 
 
-          if (
-            script.parentNode
-          ) {
+        reject(
+          new Error(
+            'GASとの通信に失敗しました'
+          )
+        );
 
-            script.parentNode
-              .removeChild(script);
-
-          }
-
-
-          reject(
-            new Error(
-              'GASとの通信に失敗しました'
-            )
-          );
-
-        };
+      };
 
 
-      document
-        .body
-        .appendChild(script);
+    document.body.appendChild(
+      script
+    );
 
-    }
-  );
+  });
 
 }
-
 
 /* =================================================
    JAN読み取り成功
