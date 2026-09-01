@@ -1,4 +1,4 @@
-　<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -99,8 +99,6 @@
 <h1>🐾 ペットシーツ在庫</h1>
 
 
-<!-- 入庫 / 使用 -->
-
 <div class="mode">
 
   <button
@@ -111,7 +109,6 @@
     ＋ 入庫
 
   </button>
-
 
   <button
     id="outButton"
@@ -124,12 +121,8 @@
 </div>
 
 
-<!-- カメラ -->
-
 <div id="reader"></div>
 
-
-<!-- 結果 -->
 
 <div class="result">
 
@@ -153,25 +146,17 @@
 
 <script>
 
-
-/* =================================================
-   GAS WebアプリURL
-================================================= */
-
-/*
- * ★ここを自分のGAS WebアプリURLに変更
- *
- * 例：
- * https://script.google.com/macros/s/XXXXXXXX/exec
- */
+/* =========================
+   GAS URL
+========================= */
 
 const GAS_URL =
   'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec';
 
 
-/* =================================================
+/* =========================
    変数
-================================================= */
+========================= */
 
 let scanner = null;
 
@@ -184,14 +169,13 @@ let lastCode = '';
 let lastScanTime = 0;
 
 
-/* =================================================
-   入庫 / 使用
-================================================= */
+/* =========================
+   モード変更
+========================= */
 
 function setMode(newMode) {
 
   mode = newMode;
-
 
   document
     .getElementById('inButton')
@@ -201,7 +185,6 @@ function setMode(newMode) {
       mode === 'in'
     );
 
-
   document
     .getElementById('outButton')
     .classList
@@ -210,21 +193,18 @@ function setMode(newMode) {
       mode === 'out'
     );
 
-
   showMessage(
-
     mode === 'in'
       ? '＋ 入庫モード'
       : '− 使用モード'
-
   );
 
 }
 
 
-/* =================================================
+/* =========================
    メッセージ
-================================================= */
+========================= */
 
 function showMessage(
   text,
@@ -236,10 +216,7 @@ function showMessage(
       'message'
     );
 
-
-  element.textContent =
-    text;
-
+  element.textContent = text;
 
   element.className =
     error
@@ -249,111 +226,117 @@ function showMessage(
 }
 
 
-/* =================================================
-   JSONPでGASを呼び出す
-================================================= */
+/* =========================
+   GAS通信
+========================= */
 
 function sendToGAS(jan) {
 
-  return new Promise(function(resolve, reject) {
+  return new Promise(
+    function(resolve, reject) {
 
-    const callbackName =
-      'gasCallback_' +
-      Date.now();
+      const callbackName =
+        'gasCallback_' +
+        Date.now() +
+        '_' +
+        Math.floor(
+          Math.random() * 100000
+        );
 
-
-    const script =
-      document.createElement('script');
-
-
-    window[callbackName] =
-      function(result) {
-
-        console.log(
-          'GASから受信:',
-          result
+      const script =
+        document.createElement(
+          'script'
         );
 
 
-        delete window[
-          callbackName
-        ];
+      let finished = false;
 
 
-        if (script.parentNode) {
+      window[callbackName] =
+        function(result) {
 
-          script.parentNode
-            .removeChild(script);
+          finished = true;
 
-        }
+          delete window[
+            callbackName
+          ];
 
+          if (
+            script.parentNode
+          ) {
 
-        resolve(result);
+            script.parentNode
+              .removeChild(script);
 
-      };
+          }
 
+          resolve(result);
 
-    const url =
-      GAS_URL +
-      '?code=' +
-      encodeURIComponent(jan) +
-      '&mode=' +
-      encodeURIComponent(mode) +
-      '&callback=' +
-      callbackName;
-
-
-    console.log(
-      'GASへ送信:',
-      url
-    );
+        };
 
 
-    script.src = url;
+      const url =
+        GAS_URL +
+        '?code=' +
+        encodeURIComponent(jan) +
+        '&mode=' +
+        encodeURIComponent(mode) +
+        '&callback=' +
+        callbackName;
 
 
-    script.onerror =
-      function() {
-
-        console.error(
-          'GAS通信エラー:',
-          url
-        );
+      console.log(
+        'GAS送信:',
+        url
+      );
 
 
-        delete window[
-          callbackName
-        ];
+      script.onerror =
+        function() {
+
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+
+          delete window[
+            callbackName
+          ];
+
+          if (
+            script.parentNode
+          ) {
+
+            script.parentNode
+              .removeChild(script);
+
+          }
+
+          reject(
+            new Error(
+              'GASとの通信に失敗しました'
+            )
+          );
+
+        };
 
 
-        if (script.parentNode) {
+      document.body.appendChild(
+        script
+      );
 
-          script.parentNode
-            .removeChild(script);
+      script.src = url;
 
-        }
-
-
-        reject(
-          new Error(
-            'GASとの通信に失敗しました'
-          )
-        );
-
-      };
-
-
-    document.body.appendChild(
-      script
-    );
-
-  });
+    }
+  );
 
 }
 
-/* =================================================
+
+/* =========================
    JAN読み取り成功
-================================================= */
+========================= */
 
 async function onScanSuccess(
   decodedText
@@ -366,18 +349,15 @@ async function onScanSuccess(
   /*
    * 連続読み取り防止
    */
-  if (
-    processing
-  ) {
 
+  if (processing) {
     return;
-
   }
 
 
   if (
     decodedText === lastCode &&
-    now - lastScanTime < 1500
+    now - lastScanTime < 2000
   ) {
 
     return;
@@ -388,17 +368,20 @@ async function onScanSuccess(
   lastCode =
     decodedText;
 
-
   lastScanTime =
     now;
-
 
   processing =
     true;
 
 
+  /*
+   * 読み取り確認
+   */
+
   showMessage(
-    'JANコードを送信しています…'
+    '読み取り：' +
+    decodedText
   );
 
 
@@ -407,15 +390,28 @@ async function onScanSuccess(
     /*
      * GASへ送信
      */
+
+    showMessage(
+      'GASへ送信しています…'
+    );
+
+
     const result =
       await sendToGAS(
         decodedText
       );
 
 
+    console.log(
+      'GAS結果:',
+      result
+    );
+
+
     /*
-     * エラー
+     * GASエラー
      */
+
     if (
       !result.success
     ) {
@@ -434,13 +430,14 @@ async function onScanSuccess(
           'stock'
         )
         .textContent =
-          result.stock ??
-          '-';
+          result.stock !== undefined
+            ? result.stock + ' パック'
+            : '-';
 
 
       showMessage(
         result.message ||
-        '処理できませんでした',
+        'エラー',
         true
       );
 
@@ -453,6 +450,7 @@ async function onScanSuccess(
     /*
      * 商品名
      */
+
     document
       .getElementById(
         'productName'
@@ -464,6 +462,7 @@ async function onScanSuccess(
     /*
      * 在庫
      */
+
     document
       .getElementById(
         'stock'
@@ -474,8 +473,9 @@ async function onScanSuccess(
 
 
     /*
-     * 最低在庫警告
+     * 最低在庫
      */
+
     if (
       result.stock <=
       result.minStock
@@ -485,7 +485,7 @@ async function onScanSuccess(
         .getElementById(
           'warning'
         )
-        .innerHTML =
+        .textContent =
           '⚠ 在庫が少なくなっています';
 
     }
@@ -496,15 +496,16 @@ async function onScanSuccess(
         .getElementById(
           'warning'
         )
-        .innerHTML =
+        .textContent =
           '';
 
     }
 
 
     /*
-     * 成功メッセージ
+     * 完了
      */
+
     if (
       mode === 'in'
     ) {
@@ -530,9 +531,7 @@ async function onScanSuccess(
 
     console.error(error);
 
-
     showMessage(
-      'エラー：' +
       error.message,
       true
     );
@@ -542,10 +541,6 @@ async function onScanSuccess(
 
   finally {
 
-    /*
-     * 少し待ってから
-     * 次の読み取りを許可
-     */
     setTimeout(
       function() {
 
@@ -561,9 +556,9 @@ async function onScanSuccess(
 }
 
 
-/* =================================================
+/* =========================
    カメラ起動
-================================================= */
+========================= */
 
 async function startScanner() {
 
@@ -579,6 +574,10 @@ async function startScanner() {
         'reader'
       );
 
+
+    /*
+     * カメラ一覧
+     */
 
     const cameras =
       await Html5Qrcode
@@ -598,11 +597,16 @@ async function startScanner() {
 
 
     /*
-     * 背面カメラを優先
+     * 最初のカメラ
      */
+
     let cameraId =
       cameras[0].id;
 
+
+    /*
+     * 背面カメラ優先
+     */
 
     for (
       const camera
@@ -617,23 +621,10 @@ async function startScanner() {
 
 
       if (
-
-        label.includes(
-          'back'
-        ) ||
-
-        label.includes(
-          'rear'
-        ) ||
-
-        label.includes(
-          'environment'
-        ) ||
-
-        label.includes(
-          '背面'
-        )
-
+        label.includes('back') ||
+        label.includes('rear') ||
+        label.includes('environment') ||
+        label.includes('背面')
       ) {
 
         cameraId =
@@ -649,64 +640,83 @@ async function startScanner() {
     /*
      * カメラ開始
      */
+
     await scanner.start(
 
-  cameraId,
+      cameraId,
 
-  {
-    fps: 10,
+      {
 
-    qrbox: {
-      width: 300,
-      height: 150
-    },
+        fps: 10,
 
-    formatsToSupport: [
+        qrbox: {
 
-      Html5QrcodeSupportedFormats.EAN_13,
+          width: 300,
 
-      Html5QrcodeSupportedFormats.EAN_8,
+          height: 150
 
-      Html5QrcodeSupportedFormats.UPC_A
+        },
 
-    ]
-  },
+        formatsToSupport: [
+
+          Html5QrcodeSupportedFormats
+            .EAN_13,
+
+          Html5QrcodeSupportedFormats
+            .EAN_8,
+
+          Html5QrcodeSupportedFormats
+            .UPC_A
+
+        ]
+
+      },
+
+      /*
+       * 読み取り成功
+       */
+
+      onScanSuccess,
 
 
-  /*
-   * バーコード読み取り成功
-   */
-  function(decodedText) {
+      /*
+       * 読み取り失敗
+       */
 
-    console.log(
-      'JAN読み取り成功：',
-      decodedText
+      function() {
+
+        // 無視
+
+      }
+
     );
 
-    document.getElementById(
-      'message'
-    ).textContent =
-      '読み取り成功：' +
-      decodedText;
 
-  },
-
-
-  /*
-   * 読み取り失敗
-   */
-  function(errorMessage) {
-
-    // 読み取り失敗は無視
+    showMessage(
+      '📷 バーコードを映してください'
+    );
 
   }
 
-);
+
+  catch (error) {
+
+    console.error(error);
+
+    showMessage(
+      'カメラを起動できません：' +
+      error.message,
+      true
+    );
+
+  }
+
+}
 
 
-/* =================================================
-   ページ読み込み
-================================================= */
+/* =========================
+   起動
+========================= */
 
 window.addEventListener(
   'load',
