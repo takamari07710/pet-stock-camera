@@ -71,9 +71,11 @@
 
     /* =========================
        読み取り成功表示
+       ※ 入力完了まで表示
     ========================= */
 
     #successOverlay {
+
       display: none;
 
       position: absolute;
@@ -327,6 +329,11 @@
 
   <div id="reader"></div>
 
+  <!--
+    読み取り成功後、
+    端数確定まで表示する
+  -->
+
   <div id="successOverlay">
 
     <div class="icon">
@@ -510,6 +517,7 @@ function setMode(newMode) {
 
   mode = newMode;
 
+
   document
     .getElementById('inButton')
     .classList
@@ -518,6 +526,7 @@ function setMode(newMode) {
       mode === 'in'
     );
 
+
   document
     .getElementById('outButton')
     .classList
@@ -525,6 +534,7 @@ function setMode(newMode) {
       'active',
       mode === 'out'
     );
+
 
   showMessage(
     mode === 'in'
@@ -549,8 +559,10 @@ function showMessage(
       'message'
     );
 
+
   message.textContent =
     text;
+
 
   message.className =
     error
@@ -562,6 +574,11 @@ function showMessage(
 
 /* =================================================
    読み取り成功表示
+=================================================
+   ★重要
+   ここでは消さない。
+   「確定」成功後に hideSuccessOverlay()
+   を呼んで消す。
 ================================================= */
 
 function showSuccessOverlay(
@@ -573,26 +590,37 @@ function showSuccessOverlay(
       'successOverlay'
     );
 
+
   const codeElement =
     document.getElementById(
       'successCode'
     );
 
+
   codeElement.textContent =
     code;
+
 
   overlay.style.display =
     'flex';
 
-  setTimeout(
-    function() {
+}
 
-      overlay.style.display =
-        'none';
 
-    },
-    1000
-  );
+/* =================================================
+   読み取り成功表示を消す
+================================================= */
+
+function hideSuccessOverlay() {
+
+  const overlay =
+    document.getElementById(
+      'successOverlay'
+    );
+
+
+  overlay.style.display =
+    'none';
 
 }
 
@@ -630,7 +658,7 @@ function sendToGAS(
 
 
       /*
-       * GASからの返答
+       * GAS返答
        */
 
       window[callbackName] =
@@ -640,18 +668,23 @@ function sendToGAS(
             return;
           }
 
+
           finished = true;
+
 
           console.log(
             'GAS返答:',
             result
           );
 
+
           delete window[
             callbackName
           ];
 
+
           script.remove();
+
 
           resolve(result);
 
@@ -669,13 +702,17 @@ function sendToGAS(
             return;
           }
 
+
           finished = true;
+
 
           delete window[
             callbackName
           ];
 
+
           script.remove();
+
 
           reject(
             new Error(
@@ -827,6 +864,7 @@ function displayProduct(
       'remainderInput'
     );
 
+
   input.focus();
 
   input.select();
@@ -858,6 +896,7 @@ function updateTotal() {
   /*
    * 空欄の場合
    */
+
   if (value === '') {
 
     const total =
@@ -871,6 +910,7 @@ function updateTotal() {
       )
       .textContent =
       total;
+
 
     return;
 
@@ -891,6 +931,10 @@ function updateTotal() {
 
   }
 
+
+  /*
+   * ★端数の上限は設けない
+   */
 
   const total =
     (
@@ -925,10 +969,14 @@ document
 
 
 /* =================================================
-   端数確定
+   ★端数確定
 ================================================= */
 
 async function confirmRemainder() {
+
+  /*
+   * JAN確認
+   */
 
   if (!currentJAN) {
 
@@ -941,6 +989,10 @@ async function confirmRemainder() {
 
   }
 
+
+  /*
+   * 商品確認
+   */
 
   if (!currentProduct) {
 
@@ -1048,7 +1100,9 @@ async function confirmRemainder() {
   try {
 
     /*
+     * ======================================
      * GASへ端数を送信
+     * ======================================
      */
 
     const result =
@@ -1073,7 +1127,7 @@ async function confirmRemainder() {
 
 
     /*
-     * エラー
+     * GAS側エラー
      */
 
     if (
@@ -1086,13 +1140,20 @@ async function confirmRemainder() {
         true
       );
 
+      /*
+       * ★エラーの場合は
+       * 読み取り成功表示を残す
+       */
+
       return;
 
     }
 
 
     /*
-     * 最新情報を表示
+     * ======================================
+     * 最新情報を画面へ反映
+     * ======================================
      */
 
     document
@@ -1144,7 +1205,9 @@ async function confirmRemainder() {
 
 
     /*
-     * 完了表示
+     * ======================================
+     * 入力完了
+     * ======================================
      */
 
     showMessage(
@@ -1152,7 +1215,32 @@ async function confirmRemainder() {
     );
 
 
+    /*
+     * ======================================
+     * ★ここで初めて
+     * 「読み取り成功」を消す
+     * ======================================
+     */
+
+    hideSuccessOverlay();
+
+
+    /*
+     * 入力欄を少し待ってから
+     * 次回入力しやすくする
+     */
+
+    setTimeout(
+      function() {
+
+        input.blur();
+
+      },
+      300
+    );
+
   }
+
 
   catch (error) {
 
@@ -1160,12 +1248,19 @@ async function confirmRemainder() {
       error
     );
 
+
+    /*
+     * 通信エラーの場合も
+     * 成功表示は残す
+     */
+
     showMessage(
       error.message,
       true
     );
 
   }
+
 
   finally {
 
@@ -1218,11 +1313,14 @@ async function onScanSuccess(
   lastCode =
     decodedText;
 
+
   lastScanTime =
     now;
 
+
   processing =
     true;
+
 
   currentJAN =
     decodedText;
@@ -1235,7 +1333,11 @@ async function onScanSuccess(
 
 
   /*
-   * 成功表示
+   * ======================================
+   * 読み取り成功表示
+   *
+   * ★ここでは消さない
+   * ======================================
    */
 
   showSuccessOverlay(
@@ -1251,7 +1353,9 @@ async function onScanSuccess(
   try {
 
     /*
+     * ======================================
      * 商品検索
+     * ======================================
      */
 
     const result =
@@ -1293,6 +1397,15 @@ async function onScanSuccess(
         true
       );
 
+
+      /*
+       * 商品がないので
+       * 成功表示を消す
+       */
+
+      hideSuccessOverlay();
+
+
       return;
 
     }
@@ -1313,11 +1426,19 @@ async function onScanSuccess(
 
   }
 
+
   catch (error) {
 
     console.error(
       error
     );
+
+
+    /*
+     * 商品取得エラー
+     *
+     * 成功表示は残す
+     */
 
     showMessage(
       error.message,
@@ -1326,17 +1447,16 @@ async function onScanSuccess(
 
   }
 
+
   finally {
 
-    setTimeout(
-      function() {
+    /*
+     * 次の読み取りは
+     * 端数確定まで止める
+     */
 
-        processing =
-          false;
-
-      },
-      500
-    );
+    processing =
+      false;
 
   }
 
@@ -1491,11 +1611,13 @@ async function startScanner() {
 
   }
 
+
   catch (error) {
 
     console.error(
       error
     );
+
 
     showMessage(
 
