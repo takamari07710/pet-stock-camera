@@ -29,7 +29,7 @@
     .mode {
       display: flex;
       gap: 10px;
-      max-width: 300px;
+      max-width: 500px;
       margin: 20px auto;
     }
 
@@ -48,12 +48,19 @@
     }
 
 #reader {
+  position: relative;
   width: 100%;
-  max-width: 300px;
+  max-width: 500px;
   margin: auto;
   background: white;
   border-radius: 10px;
   overflow: hidden;
+}
+
+/* カメラ映像 */
+#reader video {
+  width: 100% !important;
+  object-fit: cover !important;
 }
 
     .result {
