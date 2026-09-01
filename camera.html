@@ -18,20 +18,22 @@ function doGet(e) {
     e &&
     e.parameter &&
     e.parameter.action
-      ? String(e.parameter.action)
+      ? String(e.parameter.action).trim()
       : '';
+
 
   /*
    * GitHub PagesからのAPI通信
    */
-  if (action) {
+  if (action !== '') {
 
     return api(e);
 
   }
 
+
   /*
-   * GAS側で直接開いた場合
+   * GASを直接開いた場合
    */
   return HtmlService
     .createHtmlOutput(
@@ -47,10 +49,37 @@ function doGet(e) {
 
 function api(e) {
 
-  const callback =
-    createSafeCallback(
-      e.parameter.callback
-    );
+  let callback =
+    'callback';
+
+
+  if (
+    e &&
+    e.parameter &&
+    e.parameter.callback
+  ) {
+
+    callback =
+      String(
+        e.parameter.callback
+      );
+
+  }
+
+
+  /*
+   * callback名の安全確認
+   */
+  if (
+    !/^[a-zA-Z_$][0-9a-zA-Z_$]*$/
+      .test(callback)
+  ) {
+
+    callback =
+      'callback';
+
+  }
+
 
   let result;
 
@@ -69,6 +98,9 @@ function api(e) {
       ).trim();
 
 
+    /*
+     * JANコード確認
+     */
     if (!jan) {
 
       result = {
@@ -82,6 +114,7 @@ function api(e) {
 
     }
 
+
     /*
      * 商品情報取得
      */
@@ -93,6 +126,7 @@ function api(e) {
         getProduct(jan);
 
     }
+
 
     /*
      * 端数保存
@@ -106,6 +140,7 @@ function api(e) {
           e.parameter.remainder
         );
 
+
       result =
         setRemainder(
           jan,
@@ -113,6 +148,7 @@ function api(e) {
         );
 
     }
+
 
     /*
      * 入庫・使用
@@ -126,6 +162,7 @@ function api(e) {
           e.parameter.mode || 'in'
         ).trim();
 
+
       result =
         updateStock(
           jan,
@@ -134,6 +171,13 @@ function api(e) {
 
     }
 
+
+    /*
+     * 旧形式の入庫・使用にも対応
+     *
+     * actionがない場合は
+     * updateStockとして扱うことも可能
+     */
     else {
 
       result = {
@@ -147,8 +191,9 @@ function api(e) {
 
     }
 
-
   }
+
+
   catch (error) {
 
     result = {
@@ -164,8 +209,21 @@ function api(e) {
 
 
   /*
-   * JANコードを返す
+   * codeを必ず返す
    */
+  if (!result) {
+
+    result = {
+
+      success: false,
+
+      message:
+        '処理結果を取得できませんでした。'
+
+    };
+
+  }
+
 
   result.code =
     String(
@@ -176,7 +234,6 @@ function api(e) {
   /*
    * JSONP
    */
-
   const output =
     callback +
     '(' +
@@ -196,34 +253,7 @@ function api(e) {
 
 
 /* =================================================
-   callback安全化
-================================================= */
-
-function createSafeCallback(callback) {
-
-  callback =
-    String(
-      callback || 'callback'
-    );
-
-
-  if (
-    !/^[a-zA-Z_$][0-9a-zA-Z_$]*$/
-      .test(callback)
-  ) {
-
-    return 'callback';
-
-  }
-
-
-  return callback;
-
-}
-
-
-/* =================================================
-   スプレッドシート取得
+   在庫シート取得
 ================================================= */
 
 function getStockSheet() {
@@ -277,12 +307,14 @@ function getProduct(jan) {
 
 
   /*
-   * A列 = JANコード
-   * B列 = 商品名
-   * C列 = パック数
-   * D列 = 1パックあたり
-   * E列 = 端数
-   * F列 = 合計
+   * 列構成
+   *
+   * A = JANコード
+   * B = 商品名
+   * C = パック数
+   * D = 1パックあたり
+   * E = 端数
+   * F = 合計
    */
 
   for (
@@ -302,6 +334,10 @@ function getProduct(jan) {
       continue;
 
     }
+
+
+    const row =
+      i + 1;
 
 
     const name =
@@ -326,28 +362,44 @@ function getProduct(jan) {
       ) || 0;
 
 
+    /*
+     * 合計
+     *
+     * パック数 × 1パックあたり
+     * ＋
+     * 端数
+     */
+
     const total =
-      packCount *
-      perPack +
+      (
+        packCount *
+        perPack
+      ) +
       remainder;
 
 
     /*
-     * F列の合計も修正
+     * F列を更新
      */
-
     sheet
-      .getRange(i + 1, 6)
-      .setValue(total);
+      .getRange(
+        row,
+        6
+      )
+      .setValue(
+        total
+      );
 
 
     return {
 
       success: true,
 
-      code: jan,
+      code:
+        jan,
 
-      name: name,
+      name:
+        name,
 
       packCount:
         packCount,
@@ -365,6 +417,10 @@ function getProduct(jan) {
 
   }
 
+
+  /*
+   * JANが見つからない
+   */
 
   return {
 
@@ -395,12 +451,30 @@ function setRemainder(
   jan =
     String(jan).trim();
 
+
   remainder =
     Number(remainder);
+
+
+  /*
+   * 数値チェック
+   */
+
+  if (
+    !Number.isFinite(remainder)
+  ) {
+
+    throw new Error(
+      '端数を正しく入力してください。'
+    );
+
+  }
+
 
   /*
    * 整数チェック
    */
+
   if (
     !Number.isInteger(remainder)
   ) {
@@ -411,10 +485,16 @@ function setRemainder(
 
   }
 
+
   /*
-   * マイナスだけ禁止
+   * マイナスは禁止
+   *
+   * 上限は設けない
    */
-  if (remainder < 0) {
+
+  if (
+    remainder < 0
+  ) {
 
     throw new Error(
       '端数は0以上で入力してください。'
@@ -422,21 +502,19 @@ function setRemainder(
 
   }
 
+
   const sheet =
     getStockSheet();
+
 
   const values =
     sheet
       .getDataRange()
       .getValues();
 
+
   /*
-   * A列 = JANコード
-   * B列 = 商品名
-   * C列 = パック数
-   * D列 = 1パックあたり
-   * E列 = 端数
-   * F列 = 合計
+   * JAN検索
    */
 
   for (
@@ -450,63 +528,89 @@ function setRemainder(
         values[i][0]
       ).trim();
 
+
     if (code !== jan) {
+
       continue;
+
     }
+
 
     const row =
       i + 1;
 
+
     const name =
       values[i][1];
+
 
     const packCount =
       Number(
         values[i][2]
       ) || 0;
 
+
     const perPack =
       Number(
         values[i][3]
       ) || 0;
 
+
     /*
-     * E列に端数を保存
+     * E列
+     *
+     * 端数を保存
      */
+
     sheet
-      .getRange(row, 5)
+      .getRange(
+        row,
+        5
+      )
       .setValue(
         remainder
       );
 
-    /*
-     * F列の合計を計算
-     *
-     * パック数 × 1パックあたり + 端数
-     */
-    const total =
-      packCount *
-      perPack +
-      remainder;
 
     /*
-     * F列に合計を保存
+     * F列
+     *
+     * 合計
      */
+
+    const total =
+      (
+        packCount *
+        perPack
+      ) +
+      remainder;
+
+
     sheet
-      .getRange(row, 6)
+      .getRange(
+        row,
+        6
+      )
       .setValue(
         total
       );
 
+
     /*
-     * 履歴
+     * 履歴シート
      */
+
+    const ss =
+      SpreadsheetApp.openById(
+        SPREADSHEET_ID
+      );
+
+
     const historySheet =
-      SpreadsheetApp
-        .getActiveSpreadsheet()
-        .getSheetByName(
-          HISTORY_SHEET_NAME
-        );
+      ss.getSheetByName(
+        HISTORY_SHEET_NAME
+      );
+
 
     if (historySheet) {
 
@@ -528,16 +632,20 @@ function setRemainder(
 
     }
 
+
     /*
      * 結果
      */
+
     return {
 
       success: true,
 
-      code: jan,
+      code:
+        jan,
 
-      name: name,
+      name:
+        name,
 
       packCount:
         packCount,
@@ -555,6 +663,11 @@ function setRemainder(
 
   }
 
+
+  /*
+   * JANが見つからない
+   */
+
   return {
 
     success: false,
@@ -571,6 +684,7 @@ function setRemainder(
 
 }
 
+
 /* =================================================
    入庫・使用
 ================================================= */
@@ -584,6 +698,10 @@ function updateStock(
     String(jan).trim();
 
 
+  mode =
+    String(mode).trim();
+
+
   const sheet =
     getStockSheet();
 
@@ -593,6 +711,10 @@ function updateStock(
       .getDataRange()
       .getValues();
 
+
+  /*
+   * JAN検索
+   */
 
   for (
     let i = 1;
@@ -643,7 +765,9 @@ function updateStock(
      * 入庫
      */
 
-    if (mode === 'in') {
+    if (
+      mode === 'in'
+    ) {
 
       packCount++;
 
@@ -654,9 +778,13 @@ function updateStock(
      * 使用
      */
 
-    else if (mode === 'out') {
+    else if (
+      mode === 'out'
+    ) {
 
-      if (packCount <= 0) {
+      if (
+        packCount <= 0
+      ) {
 
         return {
 
@@ -665,7 +793,8 @@ function updateStock(
           message:
             'パック数が0なので減らせません。',
 
-          name: name,
+          name:
+            name,
 
           packCount:
             packCount,
@@ -677,8 +806,10 @@ function updateStock(
             remainder,
 
           total:
-            packCount *
-            perPack +
+            (
+              packCount *
+              perPack
+            ) +
             remainder
 
         };
@@ -701,28 +832,40 @@ function updateStock(
 
 
     /*
-     * C列 = パック数
+     * C列
+     *
+     * パック数
      */
 
     sheet
-      .getRange(row, 3)
+      .getRange(
+        row,
+        3
+      )
       .setValue(
         packCount
       );
 
 
     /*
-     * F列 = 合計
+     * F列
+     *
+     * 合計
      */
 
     const total =
-      packCount *
-      perPack +
+      (
+        packCount *
+        perPack
+      ) +
       remainder;
 
 
     sheet
-      .getRange(row, 6)
+      .getRange(
+        row,
+        6
+      )
       .setValue(
         total
       );
@@ -732,12 +875,16 @@ function updateStock(
      * 履歴
      */
 
+    const ss =
+      SpreadsheetApp.openById(
+        SPREADSHEET_ID
+      );
+
+
     const historySheet =
-      SpreadsheetApp
-        .getActiveSpreadsheet()
-        .getSheetByName(
-          HISTORY_SHEET_NAME
-        );
+      ss.getSheetByName(
+        HISTORY_SHEET_NAME
+      );
 
 
     if (historySheet) {
@@ -765,13 +912,19 @@ function updateStock(
     }
 
 
+    /*
+     * 結果
+     */
+
     return {
 
       success: true,
 
-      code: jan,
+      code:
+        jan,
 
-      name: name,
+      name:
+        name,
 
       packCount:
         packCount,
@@ -789,6 +942,10 @@ function updateStock(
 
   }
 
+
+  /*
+   * JANが見つからない
+   */
 
   return {
 
@@ -860,7 +1017,7 @@ function testConnection() {
 
 
 /* =================================================
-   APIテスト
+   商品検索テスト
 ================================================= */
 
 function testGetProduct() {
@@ -868,6 +1025,28 @@ function testGetProduct() {
   const result =
     getProduct(
       '4902102158169'
+    );
+
+
+  Logger.log(
+    JSON.stringify(
+      result
+    )
+  );
+
+}
+
+
+/* =================================================
+   端数保存テスト
+================================================= */
+
+function testSetRemainder() {
+
+  const result =
+    setRemainder(
+      '4902102158169',
+      5
     );
 
 
