@@ -26,6 +26,7 @@
       margin: 10px 0 15px;
     }
 
+
     /* =========================
        入庫・使用
     ========================= */
@@ -51,6 +52,7 @@
       color: white;
     }
 
+
     /* =========================
        カメラ
     ========================= */
@@ -69,9 +71,10 @@
       overflow: hidden;
     }
 
+
     /* =========================
        読み取り成功表示
-       ※ 入力完了まで表示
+       ※ 入力完了まで消さない
     ========================= */
 
     #successOverlay {
@@ -102,43 +105,68 @@
     }
 
     #successOverlay .icon {
+
       font-size: 80px;
+
       font-weight: bold;
+
       line-height: 1;
+
     }
 
     #successOverlay .title {
+
       font-size: 30px;
+
       font-weight: bold;
+
       margin-top: 10px;
+
     }
 
     #successOverlay .code {
+
       font-size: 18px;
+
       margin-top: 10px;
+
     }
+
 
     /* =========================
        商品情報
     ========================= */
 
     .result {
+
       max-width: 500px;
+
       margin: 15px auto;
+
       padding: 18px;
+
       background: white;
+
       border-radius: 10px;
     }
 
     #productName {
+
       font-size: 24px;
+
       font-weight: bold;
+
       margin-bottom: 15px;
+
     }
 
+
     .stockRow {
+
       display: flex;
+
       justify-content: space-between;
+
       align-items: center;
 
       padding: 10px 0;
@@ -146,31 +174,46 @@
       font-size: 18px;
 
       border-bottom: 1px solid #ddd;
+
     }
 
+
     .stockValue {
+
       font-size: 24px;
+
       font-weight: bold;
+
     }
+
 
     /* =========================
        端数入力
     ========================= */
 
     .remainderArea {
+
       margin-top: 18px;
+
       padding: 15px;
 
       background: #f1f8ff;
 
       border-radius: 10px;
+
     }
 
+
     .remainderTitle {
+
       font-size: 18px;
+
       font-weight: bold;
+
       margin-bottom: 12px;
+
     }
+
 
     #remainderInput {
 
@@ -187,12 +230,18 @@
       border-radius: 8px;
 
       box-sizing: border-box;
+
     }
 
+
     .remainderUnit {
+
       font-size: 18px;
+
       margin-left: 5px;
+
     }
+
 
     #confirmButton {
 
@@ -215,11 +264,16 @@
       background: #4caf50;
 
       color: white;
+
     }
 
+
     #confirmButton:disabled {
+
       background: #aaa;
+
     }
+
 
     /* =========================
        合計
@@ -234,11 +288,16 @@
       background: #fff8e1;
 
       border-radius: 10px;
+
     }
 
+
     .totalLabel {
+
       font-size: 18px;
+
     }
+
 
     #total {
 
@@ -247,7 +306,9 @@
       font-weight: bold;
 
       margin-top: 5px;
+
     }
+
 
     /* =========================
        警告
@@ -260,7 +321,9 @@
       color: #d32f2f;
 
       font-weight: bold;
+
     }
+
 
     /* =========================
        メッセージ
@@ -277,20 +340,25 @@
       border-radius: 10px;
 
       background: #e8f5e9;
+
     }
+
 
     #message.error {
 
       background: #ffebee;
 
       color: #c62828;
+
     }
 
   </style>
 
 </head>
 
+
 <body>
+
 
 <h1>🐾 ペットシーツ在庫</h1>
 
@@ -309,6 +377,7 @@
     ＋ 入庫
 
   </button>
+
 
   <button
     id="outButton"
@@ -329,9 +398,10 @@
 
   <div id="reader"></div>
 
+
   <!--
     読み取り成功後、
-    端数確定まで表示する
+    「入力完了」まで表示し続ける
   -->
 
   <div id="successOverlay">
@@ -340,9 +410,11 @@
       ✓
     </div>
 
+
     <div class="title">
       読み取り成功
     </div>
+
 
     <div
       class="code"
@@ -360,8 +432,11 @@
 
 <div class="result">
 
+
   <div id="productName">
+
     バーコードを読み取ってください
+
   </div>
 
 
@@ -371,11 +446,15 @@
       パック数
     </span>
 
+
     <span
       class="stockValue"
       id="packCount">
+
       -
+
     </span>
+
 
     <span>
       パック
@@ -390,11 +469,15 @@
       1パックあたり
     </span>
 
+
     <span
       class="stockValue"
       id="perPack">
+
       -
+
     </span>
+
 
     <span>
       個
@@ -404,7 +487,7 @@
 
 
   <!-- =========================
-       端数
+       端数入力
   ========================= -->
 
   <div
@@ -412,9 +495,13 @@
     id="remainderArea"
     style="display:none;">
 
+
     <div class="remainderTitle">
+
       端数を入力してください
+
     </div>
+
 
     <input
       type="number"
@@ -423,6 +510,7 @@
       step="1"
       inputmode="numeric"
       autocomplete="off">
+
 
     <span class="remainderUnit">
       個
@@ -450,13 +538,16 @@
     id="totalArea"
     style="display:none;">
 
+
     <div class="totalLabel">
       合計
     </div>
 
+
     <div id="total">
       -
     </div>
+
 
     <div>
       個
@@ -475,7 +566,9 @@
 ========================= -->
 
 <div id="message">
+
   カメラを準備しています…
+
 </div>
 
 
@@ -510,7 +603,7 @@ let currentProduct = null;
 
 
 /* =================================================
-   入庫・使用
+   入庫・使用モード
 ================================================= */
 
 function setMode(newMode) {
@@ -574,11 +667,6 @@ function showMessage(
 
 /* =================================================
    読み取り成功表示
-=================================================
-   ★重要
-   ここでは消さない。
-   「確定」成功後に hideSuccessOverlay()
-   を呼んで消す。
 ================================================= */
 
 function showSuccessOverlay(
@@ -600,6 +688,12 @@ function showSuccessOverlay(
   codeElement.textContent =
     code;
 
+
+  /*
+   * 緑の表示を出す
+   *
+   * ★ここでは消さない
+   */
 
   overlay.style.display =
     'flex';
@@ -637,6 +731,7 @@ function sendToGAS(
 
   return new Promise(
     function(resolve, reject) {
+
 
       const callbackName =
         'gasCallback_' +
@@ -932,10 +1027,6 @@ function updateTotal() {
   }
 
 
-  /*
-   * ★端数の上限は設けない
-   */
-
   const total =
     (
       currentProduct.packCount *
@@ -969,14 +1060,11 @@ document
 
 
 /* =================================================
-   ★端数確定
+   端数確定
 ================================================= */
 
 async function confirmRemainder() {
 
-  /*
-   * JAN確認
-   */
 
   if (!currentJAN) {
 
@@ -989,10 +1077,6 @@ async function confirmRemainder() {
 
   }
 
-
-  /*
-   * 商品確認
-   */
 
   if (!currentProduct) {
 
@@ -1099,10 +1183,9 @@ async function confirmRemainder() {
 
   try {
 
+
     /*
-     * ======================================
      * GASへ端数を送信
-     * ======================================
      */
 
     const result =
@@ -1127,7 +1210,7 @@ async function confirmRemainder() {
 
 
     /*
-     * GAS側エラー
+     * エラー
      */
 
     if (
@@ -1140,20 +1223,13 @@ async function confirmRemainder() {
         true
       );
 
-      /*
-       * ★エラーの場合は
-       * 読み取り成功表示を残す
-       */
-
       return;
 
     }
 
 
     /*
-     * ======================================
-     * 最新情報を画面へ反映
-     * ======================================
+     * 最新情報を表示
      */
 
     document
@@ -1205,9 +1281,9 @@ async function confirmRemainder() {
 
 
     /*
-     * ======================================
+     * =====================================
      * 入力完了
-     * ======================================
+     * =====================================
      */
 
     showMessage(
@@ -1216,28 +1292,25 @@ async function confirmRemainder() {
 
 
     /*
-     * ======================================
-     * ★ここで初めて
-     * 「読み取り成功」を消す
-     * ======================================
+     * ★ここで初めて緑を消す
      */
 
     hideSuccessOverlay();
 
 
     /*
-     * 入力欄を少し待ってから
-     * 次回入力しやすくする
+     * 次の読み取りに備える
      */
 
-    setTimeout(
-      function() {
+    currentJAN =
+      '';
 
-        input.blur();
+    lastCode =
+      '';
 
-      },
-      300
-    );
+    lastScanTime =
+      0;
+
 
   }
 
@@ -1248,11 +1321,6 @@ async function confirmRemainder() {
       error
     );
 
-
-    /*
-     * 通信エラーの場合も
-     * 成功表示は残す
-     */
 
     showMessage(
       error.message,
@@ -1289,7 +1357,9 @@ async function onScanSuccess(
    */
 
   if (processing) {
+
     return;
+
   }
 
 
@@ -1333,11 +1403,11 @@ async function onScanSuccess(
 
 
   /*
-   * ======================================
+   * =====================================
    * 読み取り成功表示
+   * =====================================
    *
-   * ★ここでは消さない
-   * ======================================
+   * ★入力完了まで消えない
    */
 
   showSuccessOverlay(
@@ -1352,10 +1422,11 @@ async function onScanSuccess(
 
   try {
 
+
     /*
-     * ======================================
+     * =====================================
      * 商品検索
-     * ======================================
+     * =====================================
      */
 
     const result =
@@ -1399,8 +1470,8 @@ async function onScanSuccess(
 
 
       /*
-       * 商品がないので
-       * 成功表示を消す
+       * 商品が見つからないので
+       * 緑表示を消す
        */
 
       hideSuccessOverlay();
@@ -1434,16 +1505,18 @@ async function onScanSuccess(
     );
 
 
-    /*
-     * 商品取得エラー
-     *
-     * 成功表示は残す
-     */
-
     showMessage(
       error.message,
       true
     );
+
+
+    /*
+     * 通信失敗時は
+     * 緑表示を消す
+     */
+
+    hideSuccessOverlay();
 
   }
 
@@ -1451,12 +1524,20 @@ async function onScanSuccess(
   finally {
 
     /*
-     * 次の読み取りは
-     * 端数確定まで止める
+     * カメラは動かしたまま
+     *
+     * processingだけ解除
      */
 
-    processing =
-      false;
+    setTimeout(
+      function() {
+
+        processing =
+          false;
+
+      },
+      500
+    );
 
   }
 
@@ -1470,6 +1551,7 @@ async function onScanSuccess(
 async function startScanner() {
 
   try {
+
 
     showMessage(
       'カメラを起動しています…'
@@ -1530,11 +1612,8 @@ async function startScanner() {
       if (
 
         label.includes('back') ||
-
         label.includes('rear') ||
-
         label.includes('environment') ||
-
         label.includes('背面')
 
       ) {
