@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1">
+
+  <title>カメラテスト</title>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    #message {
+      margin-top: 20px;
+      padding: 15px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>📷 カメラテスト</h1>
+
+<div id="reader"></div>
+
+<div id="message">
+  カメラを準備しています…
+</div>
+
+<script>
+
+let scanner = null;
+
+async function startScanner() {
+
+  try {
+
+    document.getElementById('message')
+      .textContent =
+      'カメラを起動しています…';
+
+    scanner =
+      new Html5Qrcode('reader');
+
+    const cameras =
+      await Html5Qrcode.getCameras();
+
+    if (!cameras || cameras.length === 0) {
+
+      throw new Error(
+        'カメラが見つかりません'
+      );
+
+    }
+
+    let cameraId = cameras[0].id;
+
+    /*
+     * 背面カメラを優先
+     */
+    for (const camera of cameras) {
+
+      const label =
+        (camera.label || '').toLowerCase();
+
+      if (
+        label.includes('back') ||
+        label.includes('rear') ||
+        label.includes('environment') ||
+        label.includes('背面')
+      ) {
+
+        cameraId = camera.id;
+        break;
+
+      }
+
+    }
+
+    await scanner.start(
+
+      cameraId,
+
+      {
+        fps: 10,
+
+        qrbox: {
+          width: 300,
+          height: 150
+        },
+
+        formatsToSupport: [
+
+          Html5QrcodeSupportedFormats.EAN_13,
+
+          Html5QrcodeSupportedFormats.EAN_8,
+
+          Html5QrcodeSupportedFormats.UPC_A
+
+        ]
+
+      },
+
+      function(decodedText) {
+
+        document.getElementById('message')
+          .textContent =
+          '読み取り：' + decodedText;
+
+      },
+
+      function() {
+        // 読み取り失敗は無視
+      }
+
+    );
+
+    document.getElementById('message')
+      .textContent =
+      '📷 バーコードを映してください';
+
+  }
+
+  catch (error) {
+
+    console.error(error);
+
+    document.getElementById('message')
+      .textContent =
+      'カメラを起動できません：' +
+      error.message;
+
+  }
+
+}
+
+window.addEventListener(
+  'load',
+  startScanner
+);
+
+</script>
+
+</body>
+</html>
