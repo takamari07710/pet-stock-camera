@@ -668,75 +668,57 @@ async function startScanner() {
      */
     await scanner.start(
 
-      cameraId,
+  cameraId,
 
-      {
+  {
+    fps: 10,
 
-        fps: 10,
+    qrbox: {
+      width: 300,
+      height: 150
+    },
 
-        qrbox: {
+    formatsToSupport: [
 
-          width: 300,
+      Html5QrcodeSupportedFormats.EAN_13,
 
-          height: 150
+      Html5QrcodeSupportedFormats.EAN_8,
 
-        },
+      Html5QrcodeSupportedFormats.UPC_A
 
-        formatsToSupport: [
-
-          Html5QrcodeSupportedFormats
-            .EAN_13,
-
-          Html5QrcodeSupportedFormats
-            .EAN_8,
-
-          Html5QrcodeSupportedFormats
-            .UPC_A
-
-        ]
-
-      },
+    ]
+  },
 
 
-      /*
-       * JAN読み取り成功
-       */
-      onScanSuccess,
+  /*
+   * バーコード読み取り成功
+   */
+  function(decodedText) {
 
-
-      /*
-       * 読み取り失敗
-       */
-      function() {
-
-        // 無視
-
-      }
-
+    console.log(
+      'JAN読み取り成功：',
+      decodedText
     );
 
+    document.getElementById(
+      'message'
+    ).textContent =
+      '読み取り成功：' +
+      decodedText;
 
-    showMessage(
-      '📷 バーコードを映してください'
-    );
+  },
+
+
+  /*
+   * 読み取り失敗
+   */
+  function(errorMessage) {
+
+    // 読み取り失敗は無視
 
   }
 
-
-  catch (error) {
-
-    console.error(error);
-
-
-    showMessage(
-      'カメラを起動できません：' +
-      error.message,
-      true
-    );
-
-  }
-
-}
+);
 
 
 /* =================================================
