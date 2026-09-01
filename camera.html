@@ -1,160 +1,911 @@
-const SPREADSHEET_ID =
-  '1fRlCfjLEDqovtA6UZDIgiHSWLhvcpdpfa9HTmhFsLlE';
+```html
+<!DOCTYPE html>
+<html lang="ja">
 
-const STOCK_SHEET_NAME =
-  'ペットシーツ在庫';
+<head>
 
-const HISTORY_SHEET_NAME =
-  '履歴';
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>ペットシーツ在庫</title>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 10px;
+      background: #f5f5f5;
+      color: #222;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 23px;
+      margin: 8px 0 12px;
+    }
+
+    /* =========================
+       入庫・使用
+    ========================= */
+
+    .mode {
+      display: flex;
+      gap: 8px;
+      max-width: 500px;
+      margin: 0 auto 10px;
+    }
+
+    .mode button {
+      flex: 1;
+      padding: 13px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      background: #ddd;
+    }
+
+    .mode button.active {
+      background: #2196f3;
+      color: white;
+    }
+
+    /* =========================
+       カメラ
+    ========================= */
+
+    #cameraArea {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    #reader {
+      width: 100%;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    /*
+     * 読み取り成功表示
+     */
+    #successOverlay {
+      display: none;
+
+      position: absolute;
+
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+
+      z-index: 9999;
+
+      background: rgba(0, 170, 0, 0.90);
+
+      color: white;
+
+      align-items: center;
+      justify-content: center;
+
+      flex-direction: column;
+
+      border-radius: 10px;
+
+      pointer-events: none;
+    }
+
+    #successIcon {
+      font-size: 75px;
+      line-height: 1;
+    }
+
+    #successTitle {
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 12px;
+    }
+
+    #successCode {
+      font-size: 18px;
+      margin-top: 8px;
+    }
+
+    /* =========================
+       商品情報
+    ========================= */
+
+    .result {
+      max-width: 500px;
+      margin: 10px auto;
+      padding: 12px;
+      background: white;
+      border-radius: 10px;
+    }
+
+    #productName {
+      font-size: 21px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .stockInfo {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .stockBox {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    .stockLabel {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .stockValue {
+      font-size: 23px;
+      font-weight: bold;
+      margin-top: 3px;
+    }
+
+    .totalBox {
+      grid-column: 1 / 3;
+      background: #e3f2fd;
+    }
+
+    .totalBox .stockValue {
+      font-size: 34px;
+    }
+
+    #warning {
+      margin-top: 8px;
+      color: #d32f2f;
+      font-weight: bold;
+    }
+
+    /* =========================
+       メッセージ
+    ========================= */
+
+    #message {
+      max-width: 500px;
+      margin: 10px auto;
+      padding: 10px;
+      border-radius: 8px;
+      background: #e8f5e9;
+    }
+
+    #message.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+  </style>
+
+</head>
 
 
-/* =========================================
-   Webアプリ
-========================================= */
-
-function doGet(e) {
-
-  /*
-   * APIとして呼ばれた場合
-   */
-
-  if (
-    e &&
-    e.parameter &&
-    e.parameter.action
-  ) {
-
-    return api(e);
-
-  }
+<body>
 
 
-  /*
-   * GAS側画面
-   */
+<h1>🐾 ペットシーツ在庫</h1>
 
-  return HtmlService
-    .createHtmlOutputFromFile('index')
-    .setTitle('ペットシーツ在庫');
+
+<!-- =========================
+     入庫・使用
+========================= -->
+
+<div class="mode">
+
+  <button
+    id="inButton"
+    class="active"
+    onclick="setMode('in')"
+  >
+    ＋ 入庫
+  </button>
+
+  <button
+    id="outButton"
+    onclick="setMode('out')"
+  >
+    − 使用
+  </button>
+
+</div>
+
+
+<!-- =========================
+     カメラ
+========================= -->
+
+<div id="cameraArea">
+
+  <div id="reader"></div>
+
+  <!-- 読み取り成功表示 -->
+
+  <div id="successOverlay">
+
+    <div id="successIcon">
+      ✓
+    </div>
+
+    <div id="successTitle">
+      読み取り成功
+    </div>
+
+    <div id="successCode"></div>
+
+  </div>
+
+</div>
+
+
+<!-- =========================
+     商品情報
+========================= -->
+
+<div class="result">
+
+  <div id="productName">
+    バーコードを読み取ってください
+  </div>
+
+
+  <div class="stockInfo">
+
+
+    <!-- パック数 -->
+
+    <div class="stockBox">
+
+      <div class="stockLabel">
+        パック数
+      </div>
+
+      <div
+        class="stockValue"
+        id="packCount"
+      >
+        -
+      </div>
+
+    </div>
+
+
+    <!-- 1パックあたり -->
+
+    <div class="stockBox">
+
+      <div class="stockLabel">
+        1パックあたり
+      </div>
+
+      <div
+        class="stockValue"
+        id="perPack"
+      >
+        -
+      </div>
+
+    </div>
+
+
+    <!-- 端数 -->
+
+    <div class="stockBox">
+
+      <div class="stockLabel">
+        端数
+      </div>
+
+      <div
+        class="stockValue"
+        id="remainder"
+      >
+        -
+      </div>
+
+    </div>
+
+
+    <!-- 合計 -->
+
+    <div class="stockBox totalBox">
+
+      <div class="stockLabel">
+        合計
+      </div>
+
+      <div
+        class="stockValue"
+        id="total"
+      >
+        -
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div id="warning"></div>
+
+</div>
+
+
+<!-- =========================
+     メッセージ
+========================= -->
+
+<div id="message">
+  カメラを準備しています…
+</div>
+
+
+
+<script>
+
+
+/* =================================================
+   GAS URL
+================================================= */
+
+const GAS_URL =
+  'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec';
+
+
+
+/* =================================================
+   変数
+================================================= */
+
+let scanner = null;
+
+let mode = 'in';
+
+let processing = false;
+
+let lastCode = '';
+
+let lastScanTime = 0;
+
+
+
+/* =================================================
+   入庫 / 使用
+================================================= */
+
+function setMode(newMode) {
+
+  mode = newMode;
+
+  document
+    .getElementById('inButton')
+    .classList
+    .toggle(
+      'active',
+      mode === 'in'
+    );
+
+  document
+    .getElementById('outButton')
+    .classList
+    .toggle(
+      'active',
+      mode === 'out'
+    );
+
+  showMessage(
+    mode === 'in'
+      ? '＋ 入庫モード'
+      : '− 使用モード'
+  );
 
 }
 
 
-/* =========================================
-   API
-========================================= */
 
-function api(e) {
+/* =================================================
+   メッセージ
+================================================= */
 
-  const action =
-    String(
-      e.parameter.action || ''
-    ).trim();
+function showMessage(
+  text,
+  error = false
+) {
+
+  const element =
+    document.getElementById('message');
+
+  element.textContent =
+    text;
+
+  element.className =
+    error
+      ? 'error'
+      : '';
+
+}
 
 
-  const jan =
-    String(
-      e.parameter.code || ''
-    ).trim();
 
+/* =================================================
+   読み取り成功表示
+================================================= */
 
-  let callback =
-    String(
-      e.parameter.callback ||
-      'callback'
+function showSuccess(code) {
+
+  const overlay =
+    document.getElementById(
+      'successOverlay'
     );
+
+  const codeElement =
+    document.getElementById(
+      'successCode'
+    );
+
+  codeElement.textContent =
+    code;
+
+  overlay.style.display =
+    'flex';
+
+  setTimeout(
+    function() {
+
+      overlay.style.display =
+        'none';
+
+    },
+    1000
+  );
+
+}
+
+
+
+/* =================================================
+   GAS通信
+================================================= */
+
+function sendToGAS(jan) {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      /*
+       * 毎回違うcallback名
+       */
+
+      const callbackName =
+        'gasCallback_' +
+        Date.now() +
+        '_' +
+        Math.floor(
+          Math.random() * 100000
+        );
+
+
+      /*
+       * scriptタグ
+       */
+
+      const script =
+        document.createElement(
+          'script'
+        );
+
+
+      let finished = false;
+
+
+      /*
+       * GASからの返答
+       */
+
+      window[callbackName] =
+        function(result) {
+
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+
+          console.log(
+            'GAS返答:',
+            result
+          );
+
+          delete window[
+            callbackName
+          ];
+
+          script.remove();
+
+          resolve(result);
+
+        };
+
+
+      /*
+       * 通信エラー
+       */
+
+      script.onerror =
+        function() {
+
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+
+          delete window[
+            callbackName
+          ];
+
+          script.remove();
+
+          reject(
+            new Error(
+              'GASとの通信に失敗しました。'
+            )
+          );
+
+        };
+
+
+      /*
+       * GAS URL
+       */
+
+      script.src =
+        GAS_URL +
+
+        '?code=' +
+        encodeURIComponent(
+          jan
+        ) +
+
+        '&mode=' +
+        encodeURIComponent(
+          mode
+        ) +
+
+        '&callback=' +
+        encodeURIComponent(
+          callbackName
+        );
+
+
+      console.log(
+        'GAS送信:',
+        script.src
+      );
+
+
+      /*
+       * 実行
+       */
+
+      document.body.appendChild(
+        script
+      );
+
+
+      /*
+       * 10秒タイムアウト
+       */
+
+      setTimeout(
+        function() {
+
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+
+          delete window[
+            callbackName
+          ];
+
+          script.remove();
+
+          reject(
+            new Error(
+              'GASからの返答がありません。'
+            )
+          );
+
+        },
+        10000
+      );
+
+    }
+  );
+
+}
+
+
+
+/* =================================================
+   商品情報を表示
+================================================= */
+
+function displayResult(result) {
+
+  /*
+   * 商品名
+   */
+
+  document
+    .getElementById(
+      'productName'
+    )
+    .textContent =
+      result.name || '-';
 
 
   /*
-   * callback安全確認
+   * パック数
+   *
+   * GAS：
+   * result.packCount
+   */
+
+  document
+    .getElementById(
+      'packCount'
+    )
+    .textContent =
+      Number(
+        result.packCount
+      ) +
+      ' パック';
+
+
+  /*
+   * 1パックあたり
+   */
+
+  document
+    .getElementById(
+      'perPack'
+    )
+    .textContent =
+      Number(
+        result.perPack
+      ) +
+      ' 個';
+
+
+  /*
+   * 端数
+   */
+
+  document
+    .getElementById(
+      'remainder'
+    )
+    .textContent =
+      Number(
+        result.remainder
+      ) +
+      ' 個';
+
+
+  /*
+   * 合計
+   */
+
+  document
+    .getElementById(
+      'total'
+    )
+    .textContent =
+      Number(
+        result.total
+      ) +
+      ' 個';
+
+}
+
+
+
+/* =================================================
+   エラー表示
+================================================= */
+
+function clearResult() {
+
+  document
+    .getElementById(
+      'productName'
+    )
+    .textContent =
+      '-';
+
+  document
+    .getElementById(
+      'packCount'
+    )
+    .textContent =
+      '-';
+
+  document
+    .getElementById(
+      'perPack'
+    )
+    .textContent =
+      '-';
+
+  document
+    .getElementById(
+      'remainder'
+    )
+    .textContent =
+      '-';
+
+  document
+    .getElementById(
+      'total'
+    )
+    .textContent =
+      '-';
+
+}
+
+
+
+/* =================================================
+   JAN読み取り成功
+================================================= */
+
+async function onScanSuccess(
+  decodedText
+) {
+
+  const now =
+    Date.now();
+
+
+  /*
+   * 処理中なら無視
+   */
+
+  if (processing) {
+    return;
+  }
+
+
+  /*
+   * 同じJANを短時間で
+   * 何度も処理しない
    */
 
   if (
-    !/^[a-zA-Z_$][0-9a-zA-Z_$]*$/
-      .test(callback)
+    decodedText === lastCode &&
+    now - lastScanTime < 2000
   ) {
 
-    callback = 'callback';
+    return;
 
   }
 
 
-  let result;
+  lastCode =
+    decodedText;
+
+  lastScanTime =
+    now;
+
+  processing =
+    true;
+
+
+  console.log(
+    'JAN読み取り:',
+    decodedText
+  );
+
+
+  /*
+   * 読み取り成功
+   */
+
+  showSuccess(
+    decodedText
+  );
+
+
+  showMessage(
+    'GASへ送信しています…'
+  );
 
 
   try {
 
 
     /*
-     * 商品検索
+     * GASへ送信
      */
 
-    if (action === 'getProduct') {
+    const result =
+      await sendToGAS(
+        decodedText
+      );
 
-      result =
-        getProduct(jan);
+
+    console.log(
+      'GAS結果:',
+      result
+    );
+
+
+    /*
+     * エラー
+     */
+
+    if (!result.success) {
+
+      clearResult();
+
+      showMessage(
+        result.message ||
+        '処理に失敗しました。',
+        true
+      );
+
+      return;
 
     }
 
 
     /*
-     * 入庫
+     * 商品情報表示
      */
 
-    else if (action === 'stockIn') {
-
-      result =
-        stockIn(jan);
-
-    }
+    displayResult(
+      result
+    );
 
 
     /*
-     * 使用
+     * 完了メッセージ
      */
 
-    else if (action === 'stockOut') {
+    if (mode === 'in') {
 
-      result =
-        stockOut(jan);
+      showMessage(
+        '＋ 1パック追加しました'
+      );
 
-    }
+    } else {
 
-
-    /*
-     * 端数変更
-     */
-
-    else if (action === 'setRemainder') {
-
-      const remainder =
-        Number(
-          e.parameter.remainder
-        );
-
-      result =
-        setRemainder(
-          jan,
-          remainder
-        );
-
-    }
-
-
-    /*
-     * 不明なAPI
-     */
-
-    else {
-
-      result = {
-
-        success: false,
-
-        message:
-          'actionが不正です。'
-
-      };
+      showMessage(
+        '− 1個使用しました'
+      );
 
     }
 
@@ -163,826 +914,223 @@ function api(e) {
 
   catch (error) {
 
-    result = {
+    console.error(
+      'GAS通信エラー:',
+      error
+    );
 
-      success: false,
-
-      message:
-        error.message
-
-    };
+    showMessage(
+      error.message,
+      true
+    );
 
   }
 
 
-  /*
-   * JANコードを返す
-   */
+  finally {
 
-  result.code = jan;
+    /*
+     * 少し待ってから
+     * 次の読み取りを許可
+     */
 
+    setTimeout(
+      function() {
 
-  /*
-   * JSONP
-   */
+        processing =
+          false;
 
-  const output =
-    callback +
-    '(' +
-    JSON.stringify(result) +
-    ');';
-
-
-  return ContentService
-
-    .createTextOutput(output)
-
-    .setMimeType(
-      ContentService.MimeType.JAVASCRIPT
+      },
+      500
     );
+
+  }
 
 }
 
 
-/* =========================================
-   商品検索
-========================================= */
 
-function getProduct(jan) {
+/* =================================================
+   カメラ起動
+================================================= */
 
-  jan =
-    String(jan).trim();
+async function startScanner() {
 
+  try {
 
-  const ss =
-    SpreadsheetApp.openById(
-      SPREADSHEET_ID
+    showMessage(
+      'カメラを起動しています…'
     );
 
 
-  const sheet =
-    ss.getSheetByName(
-      STOCK_SHEET_NAME
-    );
+    scanner =
+      new Html5Qrcode(
+        'reader'
+      );
 
 
-  if (!sheet) {
+    /*
+     * カメラ一覧
+     */
 
-    throw new Error(
-      '「' +
-      STOCK_SHEET_NAME +
-      '」シートが見つかりません。'
-    );
-
-  }
-
-
-  const values =
-    sheet
-      .getDataRange()
-      .getValues();
-
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-
-    const code =
-      String(
-        values[i][0]
-      ).trim();
-
-
-    if (code !== jan) {
-      continue;
-    }
-
-
-    const packCount =
-      Number(
-        values[i][2]
-      ) || 0;
-
-
-    const perPack =
-      Number(
-        values[i][3]
-      ) || 0;
-
-
-    const remainder =
-      Number(
-        values[i][4]
-      ) || 0;
-
-
-    const total =
-      packCount *
-      perPack +
-      remainder;
-
-
-    return {
-
-      success: true,
-
-      found: true,
-
-      code: code,
-
-      name:
-        values[i][1],
-
-      packCount:
-        packCount,
-
-      perPack:
-        perPack,
-
-      remainder:
-        remainder,
-
-      total:
-        total
-
-    };
-
-  }
-
-
-  return {
-
-    success: false,
-
-    found: false,
-
-    message:
-      '登録されていないJANコードです。',
-
-    code: jan
-
-  };
-
-}
-
-
-/* =========================================
-   入庫
-   1パック追加
-========================================= */
-
-function stockIn(jan) {
-
-  const product =
-    getProduct(jan);
-
-
-  if (!product.success) {
-
-    return product;
-
-  }
-
-
-  const ss =
-    SpreadsheetApp.openById(
-      SPREADSHEET_ID
-    );
-
-
-  const sheet =
-    ss.getSheetByName(
-      STOCK_SHEET_NAME
-    );
-
-
-  const values =
-    sheet
-      .getDataRange()
-      .getValues();
-
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
+    const cameras =
+      await Html5Qrcode
+        .getCameras();
 
 
     if (
-      String(values[i][0]).trim()
-      !== jan
+      !cameras ||
+      cameras.length === 0
     ) {
 
-      continue;
+      throw new Error(
+        'カメラが見つかりません。'
+      );
 
     }
 
 
-    const row =
-      i + 1;
+    /*
+     * 最初のカメラ
+     */
 
-
-    const newPackCount =
-      product.packCount + 1;
-
-
-    const total =
-      newPackCount *
-      product.perPack +
-      product.remainder;
+    let cameraId =
+      cameras[0].id;
 
 
     /*
-     * C列 パック数
+     * 背面カメラ優先
      */
 
-    sheet
-      .getRange(row, 3)
-      .setValue(
-        newPackCount
-      );
-
-
-    /*
-     * F列 合計
-     */
-
-    sheet
-      .getRange(row, 6)
-      .setValue(
-        total
-      );
-
-
-    addHistory(
-      jan,
-      product.name,
-      '入庫',
-      1,
-      newPackCount,
-      product.perPack,
-      product.remainder,
-      total
-    );
-
-
-    return {
-
-      success: true,
-
-      name:
-        product.name,
-
-      packCount:
-        newPackCount,
-
-      perPack:
-        product.perPack,
-
-      remainder:
-        product.remainder,
-
-      total:
-        total
-
-    };
-
-  }
-
-
-  return {
-
-    success: false,
-
-    message:
-      '商品が見つかりません。'
-
-  };
-
-}
-
-
-/* =========================================
-   使用
-   1個減らす
-========================================= */
-
-function stockOut(jan) {
-
-  const product =
-    getProduct(jan);
-
-
-  if (!product.success) {
-
-    return product;
-
-  }
-
-
-  if (product.total <= 0) {
-
-    return {
-
-      success: false,
-
-      message:
-        '在庫が0なので減らせません。',
-
-      name:
-        product.name,
-
-      packCount:
-        product.packCount,
-
-      perPack:
-        product.perPack,
-
-      remainder:
-        product.remainder,
-
-      total:
-        0
-
-    };
-
-  }
-
-
-  let packCount =
-    product.packCount;
-
-  let remainder =
-    product.remainder;
-
-
-  /*
-   * 端数がある場合
-   */
-
-  if (remainder > 0) {
-
-    remainder--;
-
-  }
-
-
-  /*
-   * 端数がない場合
-   */
-
-  else {
-
-    if (packCount <= 0) {
-
-      return {
-
-        success: false,
-
-        message:
-          '在庫データが不正です。'
-
-      };
-
-    }
-
-
-    packCount--;
-
-    remainder =
-      product.perPack - 1;
-
-  }
-
-
-  const total =
-    packCount *
-    product.perPack +
-    remainder;
-
-
-  const ss =
-    SpreadsheetApp.openById(
-      SPREADSHEET_ID
-    );
-
-
-  const sheet =
-    ss.getSheetByName(
-      STOCK_SHEET_NAME
-    );
-
-
-  const values =
-    sheet
-      .getDataRange()
-      .getValues();
-
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-
-    if (
-      String(values[i][0]).trim()
-      !== jan
+    for (
+      const camera
+      of cameras
     ) {
 
-      continue;
+      const label =
+        (
+          camera.label ||
+          ''
+        ).toLowerCase();
+
+
+      if (
+        label.includes('back') ||
+        label.includes('rear') ||
+        label.includes('environment') ||
+        label.includes('背面')
+      ) {
+
+        cameraId =
+          camera.id;
+
+        break;
+
+      }
 
     }
 
 
-    const row =
-      i + 1;
-
-
     /*
-     * C列
+     * カメラ起動
      */
 
-    sheet
-      .getRange(row, 3)
-      .setValue(
-        packCount
-      );
+    await scanner.start(
+
+      cameraId,
+
+      {
+
+        fps: 10,
+
+        /*
+         * バーコード枠
+         */
+
+        qrbox: {
+          width: 300,
+          height: 150
+        },
+
+        /*
+         * JAN対応
+         */
+
+        formatsToSupport: [
+
+          Html5QrcodeSupportedFormats
+            .EAN_13,
+
+          Html5QrcodeSupportedFormats
+            .EAN_8,
+
+          Html5QrcodeSupportedFormats
+            .UPC_A
+
+        ]
+
+      },
 
 
-    /*
-     * E列
-     */
+      /*
+       * 読み取り成功
+       */
 
-    sheet
-      .getRange(row, 5)
-      .setValue(
-        remainder
-      );
+      onScanSuccess,
 
 
-    /*
-     * F列
-     */
+      /*
+       * 読み取り失敗は無視
+       */
 
-    sheet
-      .getRange(row, 6)
-      .setValue(
-        total
-      );
+      function() {}
 
-
-    addHistory(
-      jan,
-      product.name,
-      '使用',
-      -1,
-      packCount,
-      product.perPack,
-      remainder,
-      total
     );
 
 
-    return {
-
-      success: true,
-
-      name:
-        product.name,
-
-      packCount:
-        packCount,
-
-      perPack:
-        product.perPack,
-
-      remainder:
-        remainder,
-
-      total:
-        total
-
-    };
+    showMessage(
+      '📷 バーコードを映してください'
+    );
 
   }
 
 
-  return {
+  catch (error) {
 
-    success: false,
+    console.error(
+      'カメラエラー:',
+      error
+    );
 
-    message:
-      '商品が見つかりません。'
+    showMessage(
+      'カメラを起動できません：' +
+      error.message,
+      true
+    );
 
-  };
+  }
 
 }
 
 
-/* =========================================
-   端数設定
-========================================= */
 
-function setRemainder(
-  jan,
-  remainder
-) {
+/* =================================================
+   ページ読み込み
+================================================= */
 
-  jan =
-    String(jan).trim();
+window.addEventListener(
+  'load',
+  function() {
 
-
-  remainder =
-    Number(remainder);
-
-
-  if (
-    !Number.isInteger(remainder)
-  ) {
-
-    throw new Error(
-      '端数は整数で入力してください。'
-    );
+    startScanner();
 
   }
+);
 
+</script>
 
-  if (remainder < 0) {
 
-    throw new Error(
-      '端数は0以上で入力してください。'
-    );
+</body>
 
-  }
-
-
-  const product =
-    getProduct(jan);
-
-
-  if (!product.success) {
-
-    return product;
-
-  }
-
-
-  /*
-   * 端数は
-   * 1パック未満にする
-   */
-
-  if (
-    remainder >=
-    product.perPack
-  ) {
-
-    throw new Error(
-
-      '端数は' +
-      product.perPack +
-      '個未満で入力してください。'
-
-    );
-
-  }
-
-
-  const ss =
-    SpreadsheetApp.openById(
-      SPREADSHEET_ID
-    );
-
-
-  const sheet =
-    ss.getSheetByName(
-      STOCK_SHEET_NAME
-    );
-
-
-  const values =
-    sheet
-      .getDataRange()
-      .getValues();
-
-
-  for (
-    let i = 1;
-    i < values.length;
-    i++
-  ) {
-
-
-    if (
-      String(values[i][0]).trim()
-      !== jan
-    ) {
-
-      continue;
-
-    }
-
-
-    const row =
-      i + 1;
-
-
-    /*
-     * E列 端数
-     */
-
-    sheet
-      .getRange(row, 5)
-      .setValue(
-        remainder
-      );
-
-
-    /*
-     * F列 合計
-     */
-
-    const total =
-      product.packCount *
-      product.perPack +
-      remainder;
-
-
-    sheet
-      .getRange(row, 6)
-      .setValue(
-        total
-      );
-
-
-    /*
-     * 履歴
-     */
-
-    addHistory(
-      jan,
-      product.name,
-      '端数変更',
-      0,
-      product.packCount,
-      product.perPack,
-      remainder,
-      total
-    );
-
-
-    return {
-
-      success: true,
-
-      name:
-        product.name,
-
-      packCount:
-        product.packCount,
-
-      perPack:
-        product.perPack,
-
-      remainder:
-        remainder,
-
-      total:
-        total
-
-    };
-
-  }
-
-
-  return {
-
-    success: false,
-
-    message:
-      '商品が見つかりません。'
-
-  };
-
-}
-
-
-/* =========================================
-   履歴
-========================================= */
-
-function addHistory(
-  jan,
-  name,
-  action,
-  change,
-  packCount,
-  perPack,
-  remainder,
-  total
-) {
-
-  const ss =
-    SpreadsheetApp.openById(
-      SPREADSHEET_ID
-    );
-
-
-  const sheet =
-    ss.getSheetByName(
-      HISTORY_SHEET_NAME
-    );
-
-
-  if (!sheet) {
-
-    throw new Error(
-      '「' +
-      HISTORY_SHEET_NAME +
-      '」シートが見つかりません。'
-    );
-
-  }
-
-
-  sheet.appendRow([
-
-    new Date(),
-
-    jan,
-
-    name,
-
-    action,
-
-    change,
-
-    packCount,
-
-    perPack,
-
-    remainder,
-
-    total
-
-  ]);
-
-}
-
-
-/* =========================================
-   接続確認
-========================================= */
-
-function testConnection() {
-
-  const ss =
-    SpreadsheetApp.openById(
-      SPREADSHEET_ID
-    );
-
-
-  const stockSheet =
-    ss.getSheetByName(
-      STOCK_SHEET_NAME
-    );
-
-
-  const historySheet =
-    ss.getSheetByName(
-      HISTORY_SHEET_NAME
-    );
-
-
-  Logger.log(
-    'スプレッドシート：' +
-    ss.getName()
-  );
-
-
-  Logger.log(
-    '在庫シート：' +
-    (
-      stockSheet
-        ? 'OK'
-        : 'なし'
-    )
-  );
-
-
-  Logger.log(
-    '履歴シート：' +
-    (
-      historySheet
-        ? 'OK'
-        : 'なし'
-    )
-  );
-
-}
+</html>
+```
