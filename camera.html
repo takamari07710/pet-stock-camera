@@ -1,21 +1,18 @@
 <!DOCTYPE html>
+
 <html>
 <head>
   <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1">
+<meta
+ name="viewport"
+ content="width=device-width, initial-scale=1">
 
   <title>ペットシーツ在庫</title>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
-
-    /* =========================
-       基本
-    ========================= */
 
     body {
       font-family: sans-serif;
@@ -28,13 +25,10 @@
 
     h1 {
       font-size: 24px;
-      margin-top: 5px;
     }
 
 
-    /* =========================
-       入庫 / 使用ボタン
-    ========================= */
+    /* 入庫・使用 */
 
     .mode {
       display: flex;
@@ -58,12 +52,7 @@
     }
 
 
-    /* =========================
-       カメラ
-       
-       ここはhtml5-qrcodeの
-       読み取り枠を壊さない
-    ========================= */
+    /* カメラ */
 
     #cameraArea {
       position: relative;
@@ -81,11 +70,13 @@
     }
 
 
-    /* =========================
-       読み取り成功オーバーレイ
-    ========================= */
+    /*
+     * 読み取り成功表示
+     *
+     * カメラの上に完全に重ねる
+     */
 
-    #scanSuccessOverlay {
+    #successOverlay {
 
       display: none;
 
@@ -96,14 +87,9 @@
       right: 0;
       bottom: 0;
 
-      z-index: 1000;
+      z-index: 9999;
 
-      background: rgba(
-        0,
-        150,
-        0,
-        0.75
-      );
+      background: rgba(0, 180, 0, 0.85);
 
       color: white;
 
@@ -115,42 +101,41 @@
       border-radius: 10px;
 
       pointer-events: none;
-
     }
 
 
-    #scanSuccessOverlay .check {
+    #successOverlay .icon {
 
-      font-size: 70px;
-
-      line-height: 1;
-
-      margin-bottom: 10px;
-
-    }
-
-
-    #scanSuccessOverlay .text {
-
-      font-size: 30px;
+      font-size: 80px;
 
       font-weight: bold;
 
+      line-height: 1;
+
     }
 
 
-    #scanSuccessOverlay .jan {
+    #successOverlay .title {
 
-      margin-top: 10px;
+      font-size: 32px;
+
+      font-weight: bold;
+
+      margin-top: 15px;
+
+    }
+
+
+    #successOverlay .code {
 
       font-size: 18px;
 
+      margin-top: 10px;
+
     }
 
 
-    /* =========================
-       商品情報
-    ========================= */
+    /* 商品情報 */
 
     .result {
 
@@ -163,14 +148,11 @@
       background: white;
 
       border-radius: 10px;
-
     }
 
 
     #productName {
-
       font-size: 20px;
-
     }
 
 
@@ -191,14 +173,10 @@
 
       font-weight: bold;
 
-      margin-top: 10px;
-
     }
 
 
-    /* =========================
-       メッセージ
-    ========================= */
+    /* メッセージ */
 
     #message {
 
@@ -215,9 +193,9 @@
     }
 
 
-    .error {
+    #message.error {
 
-      background: #ffebee !important;
+      background: #ffebee;
 
       color: #c62828;
 
@@ -227,77 +205,67 @@
 
 </head>
 
-
 <body>
-
 
 <h1>🐾 ペットシーツ在庫</h1>
 
-
-<!-- =========================
-     入庫 / 使用
-========================= -->
+<!-- 入庫・使用 -->
 
 <div class="mode">
 
-  <button
-    id="inButton"
-    class="active"
-    onclick="setMode('in')">
+<button
+ id="inButton"
+ class="active"
+ onclick="setMode('in')">
 
-    ＋ 入庫
+```
+＋ 入庫
+```
 
   </button>
 
+<button
+ id="outButton"
+ onclick="setMode('out')">
 
-  <button
-    id="outButton"
-    onclick="setMode('out')">
-
-    − 使用
+```
+− 使用
+```
 
   </button>
 
 </div>
 
-
-<!-- =========================
-     カメラエリア
-========================= -->
+<!-- カメラ -->
 
 <div id="cameraArea">
 
   <div id="reader"></div>
 
+  <!-- 成功時にカメラへ重ねる -->
 
-  <!--
-       JAN読み取り成功時に
-       カメラ映像へ重ねて表示
-  -->
+  <div id="successOverlay">
 
-  <div id="scanSuccessOverlay">
+```
+<div class="icon">
+  ✓
+</div>
 
-    <div class="check">
-      ✓
-    </div>
+<div class="title">
+  読み取り成功
+</div>
 
-    <div class="text">
-      読み取り成功
-    </div>
-
-    <div
-      class="jan"
-      id="successJan">
-    </div>
+<div
+  class="code"
+  id="successCode">
+</div>
+```
 
   </div>
 
 </div>
 
-
-<!-- =========================
-     商品情報
-========================= -->
+<!-- 商品情報 -->
 
 <div class="result">
 
@@ -305,40 +273,34 @@
     バーコードを読み取ってください
   </div>
 
-
   <div id="stock">
     -
   </div>
-
 
   <div id="warning"></div>
 
 </div>
 
-
-<!-- =========================
-     メッセージ
-========================= -->
+<!-- メッセージ -->
 
 <div id="message">
   カメラを準備しています…
 </div>
 
-
 <script>
 
 
-/* ==================================================
-   GAS WebアプリURL
-================================================== */
+/* =================================================
+   GAS URL
+================================================= */
 
 const GAS_URL =
   'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec';
 
 
-/* ==================================================
+/* =================================================
    変数
-================================================== */
+================================================= */
 
 let scanner = null;
 
@@ -351,16 +313,9 @@ let lastCode = '';
 let lastScanTime = 0;
 
 
-/* ==================================================
-   成功表示タイマー
-================================================== */
-
-let successTimer = null;
-
-
-/* ==================================================
-   入庫 / 使用切り替え
-================================================== */
+/* =================================================
+   入庫・使用
+================================================= */
 
 function setMode(newMode) {
 
@@ -386,36 +341,34 @@ function setMode(newMode) {
 
 
   showMessage(
-
     mode === 'in'
       ? '＋ 入庫モード'
       : '− 使用モード'
-
   );
 
 }
 
 
-/* ==================================================
-   メッセージ表示
-================================================== */
+/* =================================================
+   メッセージ
+================================================= */
 
 function showMessage(
   text,
   error = false
 ) {
 
-  const element =
+  const message =
     document.getElementById(
       'message'
     );
 
 
-  element.textContent =
+  message.textContent =
     text;
 
 
-  element.className =
+  message.className =
     error
       ? 'error'
       : '';
@@ -423,36 +376,38 @@ function showMessage(
 }
 
 
-/* ==================================================
-   読み取り成功表示
-================================================== */
+/* =================================================
+   ★ 読み取り成功表示
+================================================= */
 
-function showScanSuccess(
-  jan
+function showSuccessOverlay(
+  code
 ) {
+
+  console.log(
+    '読み取り成功表示：',
+    code
+  );
+
 
   const overlay =
     document.getElementById(
-      'scanSuccessOverlay'
+      'successOverlay'
     );
 
 
-  const janElement =
+  const codeElement =
     document.getElementById(
-      'successJan'
+      'successCode'
     );
 
 
-  /*
-   * JANコードを表示
-   */
-
-  janElement.textContent =
-    jan;
+  codeElement.textContent =
+    code;
 
 
   /*
-   * 表示
+   * display:none → flex
    */
 
   overlay.style.display =
@@ -460,70 +415,42 @@ function showScanSuccess(
 
 
   /*
-   * 前回のタイマーを
-   * キャンセル
-   */
-
-  if (successTimer) {
-
-    clearTimeout(
-      successTimer
-    );
-
-  }
-
-
-  /*
    * 1秒後に消す
    */
 
-  successTimer =
-    setTimeout(
-      function() {
+  setTimeout(
+    function() {
 
-        overlay.style.display =
-          'none';
+      overlay.style.display =
+        'none';
 
-      },
-      1000
-    );
+    },
+    1000
+  );
 
 }
 
 
-/* ==================================================
+/* =================================================
    GAS通信
-================================================== */
+================================================= */
 
 function sendToGAS(
   jan
 ) {
 
   return new Promise(
-    function(
-      resolve,
-      reject
-    ) {
+    function(resolve, reject) {
 
-
-      /*
-       * JSONP用の
-       * ユニークな関数名
-       */
 
       const callbackName =
         'gasCallback_' +
         Date.now() +
         '_' +
         Math.floor(
-          Math.random() *
-          100000
+          Math.random() * 100000
         );
 
-
-      /*
-       * scriptタグ作成
-       */
 
       const script =
         document.createElement(
@@ -536,25 +463,22 @@ function sendToGAS(
 
 
       /*
-       * GASから返ってくる処理
+       * GASからの返答
        */
 
       window[callbackName] =
         function(result) {
 
           if (finished) {
-
             return;
-
           }
 
 
-          finished =
-            true;
+          finished = true;
 
 
           console.log(
-            'GASから受信：',
+            'GAS返答：',
             result
           );
 
@@ -564,30 +488,51 @@ function sendToGAS(
           ];
 
 
-          if (
-            script.parentNode
-          ) {
+          script.remove();
 
-            script.parentNode
-              .removeChild(
-                script
-              );
 
+          resolve(result);
+
+        };
+
+
+      /*
+       * エラー
+       */
+
+      script.onerror =
+        function() {
+
+          if (finished) {
+            return;
           }
 
 
-          resolve(
-            result
+          finished = true;
+
+
+          delete window[
+            callbackName
+          ];
+
+
+          script.remove();
+
+
+          reject(
+            new Error(
+              'GASとの通信に失敗しました'
+            )
           );
 
         };
 
 
       /*
-       * URL作成
+       * GAS URL
        */
 
-      const url =
+      script.src =
         GAS_URL +
 
         '?code=' +
@@ -607,66 +552,10 @@ function sendToGAS(
 
 
       console.log(
-        'GASへ送信：',
-        url
+        'GAS送信：',
+        script.src
       );
 
-
-      /*
-       * 通信エラー
-       */
-
-      script.onerror =
-        function() {
-
-          if (finished) {
-
-            return;
-
-          }
-
-
-          finished =
-            true;
-
-
-          delete window[
-            callbackName
-          ];
-
-
-          if (
-            script.parentNode
-          ) {
-
-            script.parentNode
-              .removeChild(
-                script
-              );
-
-          }
-
-
-          reject(
-            new Error(
-              'GASとの通信に失敗しました'
-            )
-          );
-
-        };
-
-
-      /*
-       * GAS URLを設定
-       */
-
-      script.src =
-        url;
-
-
-      /*
-       * 実行
-       */
 
       document
         .body
@@ -680,9 +569,9 @@ function sendToGAS(
 }
 
 
-/* ==================================================
+/* =================================================
    JAN読み取り成功
-================================================== */
+================================================= */
 
 async function onScanSuccess(
   decodedText
@@ -693,19 +582,16 @@ async function onScanSuccess(
 
 
   /*
-   * 処理中なら無視
+   * 処理中は無視
    */
 
   if (processing) {
-
     return;
-
   }
 
 
   /*
-   * 同じバーコードの
-   * 連続読み取り防止
+   * 同じJANの連続読み取り防止
    */
 
   if (
@@ -733,22 +619,52 @@ async function onScanSuccess(
     true;
 
 
-  /*
-   * ★ここでカメラ映像に
-   * 「読み取り成功」を表示
-   */
-
-  showScanSuccess(
+  console.log(
+    'JAN読み取り：',
     decodedText
   );
 
 
   /*
-   * 画面下のメッセージ
+   * ==========================================
+   * ① まず成功表示
+   * ==========================================
+   */
+
+  showSuccessOverlay(
+    decodedText
+  );
+
+
+  /*
+   * ==========================================
+   * ② 画面下のメッセージ
+   * ==========================================
    */
 
   showMessage(
-    'GASへ送信しています…'
+    '読み取り成功。処理しています…'
+  );
+
+
+  /*
+   * ==========================================
+   * ③ 1秒待つ
+   * ==========================================
+   *
+   * これで「成功」が確実に1秒見える
+   *
+   */
+
+  await new Promise(
+    function(resolve) {
+
+      setTimeout(
+        resolve,
+        1000
+      );
+
+    }
   );
 
 
@@ -756,7 +672,9 @@ async function onScanSuccess(
 
 
     /*
-     * GASへ送信
+     * ======================================
+     * ④ GASへ送信
+     * ======================================
      */
 
     const result =
@@ -772,7 +690,7 @@ async function onScanSuccess(
 
 
     /*
-     * GAS側でエラー
+     * GAS側エラー
      */
 
     if (
@@ -789,40 +707,20 @@ async function onScanSuccess(
           'エラー';
 
 
-      if (
-        result.stock !==
-        undefined
-      ) {
-
-        document
-          .getElementById(
-            'stock'
-          )
-          .textContent =
-            result.stock +
-            ' パック';
-
-      }
-
-      else {
-
-        document
-          .getElementById(
-            'stock'
-          )
-          .textContent =
-            '-';
-
-      }
+      document
+        .getElementById(
+          'stock'
+        )
+        .textContent =
+          result.stock !== undefined
+            ? result.stock + ' パック'
+            : '-';
 
 
       showMessage(
-
         result.message ||
         '処理できませんでした',
-
         true
-
       );
 
 
@@ -857,7 +755,7 @@ async function onScanSuccess(
 
 
     /*
-     * 最低在庫警告
+     * 最低在庫
      */
 
     if (
@@ -921,12 +819,8 @@ async function onScanSuccess(
 
 
     showMessage(
-
-      'エラー：' +
       error.message,
-
       true
-
     );
 
   }
@@ -934,10 +828,8 @@ async function onScanSuccess(
 
   finally {
 
-
     /*
-     * 次の読み取りまで
-     * 少し待つ
+     * 次の読み取りを許可
      */
 
     setTimeout(
@@ -947,7 +839,7 @@ async function onScanSuccess(
           false;
 
       },
-      1000
+      500
     );
 
   }
@@ -955,9 +847,9 @@ async function onScanSuccess(
 }
 
 
-/* ==================================================
+/* =================================================
    カメラ起動
-================================================== */
+================================================= */
 
 async function startScanner() {
 
@@ -969,10 +861,6 @@ async function startScanner() {
     );
 
 
-    /*
-     * スキャナー作成
-     */
-
     scanner =
       new Html5Qrcode(
         'reader'
@@ -980,7 +868,7 @@ async function startScanner() {
 
 
     /*
-     * カメラ一覧取得
+     * カメラ取得
      */
 
     const cameras =
@@ -1012,14 +900,13 @@ async function startScanner() {
 
 
     /*
-     * 背面カメラ優先
+     * 背面カメラを優先
      */
 
     for (
       const camera
       of cameras
     ) {
-
 
       const label =
         (
@@ -1030,21 +917,13 @@ async function startScanner() {
 
       if (
 
-        label.includes(
-          'back'
-        ) ||
+        label.includes('back') ||
 
-        label.includes(
-          'rear'
-        ) ||
+        label.includes('rear') ||
 
-        label.includes(
-          'environment'
-        ) ||
+        label.includes('environment') ||
 
-        label.includes(
-          '背面'
-        )
+        label.includes('背面')
 
       ) {
 
@@ -1059,10 +938,11 @@ async function startScanner() {
 
 
     /*
-     * カメラ開始
+     * ======================================
+     * カメラ起動
+     * ======================================
      *
-     * ★ここは読み取り枠を
-     * 変更しない
+     * ★ここは変更しない
      */
 
     await scanner.start(
@@ -1145,9 +1025,9 @@ async function startScanner() {
 }
 
 
-/* ==================================================
+/* =================================================
    ページ読み込み
-================================================== */
+================================================= */
 
 window.addEventListener(
   'load',
