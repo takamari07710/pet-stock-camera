@@ -53,6 +53,7 @@
       border: none;
       border-radius: 10px;
       background: #ddd;
+      cursor: pointer;
     }
 
 
@@ -396,44 +397,32 @@
     @media (max-width: 430px) {
 
       body {
-
         padding: 10px;
-
       }
 
 
       h1 {
-
         font-size: 22px;
-
       }
 
 
       .stockRow {
-
         font-size: 16px;
-
       }
 
 
       .stockValue {
-
         font-size: 22px;
-
       }
 
 
       #successOverlay .icon {
-
         font-size: 65px;
-
       }
 
 
       #successOverlay .title {
-
         font-size: 25px;
-
       }
 
 
@@ -702,20 +691,6 @@ let lastCode = '';
 let lastScanTime = 0;
 
 
-/*
- * 現在の商品JAN
- */
-
-let currentJAN = '';
-
-
-/*
- * 現在の商品情報
- */
-
-let currentProduct = null;
-
-
 /* =================================================
    入庫・使用モード
 ================================================= */
@@ -866,9 +841,7 @@ function sendToGAS(
         function(result) {
 
           if (finished) {
-
             return;
-
           }
 
 
@@ -902,9 +875,7 @@ function sendToGAS(
         function() {
 
           if (finished) {
-
             return;
-
           }
 
 
@@ -995,16 +966,14 @@ function sendToGAS(
 
 function displayProduct(result) {
 
-  currentProduct =
-    result;
-
-
   document
     .getElementById(
       'productName'
     )
     .textContent =
-      result.name;
+      result.name ||
+      result.productName ||
+      '-';
 
 
   document
@@ -1053,12 +1022,9 @@ async function onScanSuccess(
     Date.now();
 
 
-  /*
-   * =================================================
-   * 同じバーコードを
-   * 2秒以内には読まない
-   * =================================================
-   */
+  /* =================================================
+     同じバーコードは2秒以内に読まない
+  ================================================= */
 
   if (
     decodedText === lastCode &&
@@ -1070,9 +1036,9 @@ async function onScanSuccess(
   }
 
 
-  /*
-   * 通信処理中なら無視
-   */
+  /* =================================================
+     通信処理中なら無視
+  ================================================= */
 
   if (processing) {
 
@@ -1082,33 +1048,22 @@ async function onScanSuccess(
 
 
   /*
-   * 最後に読み取ったJANと時間
+   * 最後に読み取ったJANと時間を保存
    */
 
   lastCode =
     decodedText;
-
 
   lastScanTime =
     now;
 
 
   /*
-   * 通信開始
+   * 通信中
    */
 
   processing =
     true;
-
-
-  currentJAN =
-    decodedText;
-
-
-  console.log(
-    'JAN読み取り:',
-    decodedText
-  );
 
 
   /*
@@ -1120,34 +1075,48 @@ async function onScanSuccess(
   );
 
 
+  /*
+   * モード表示
+   */
+
   showMessage(
-    '読み取り成功。商品情報を取得しています…'
+
+    mode === 'in'
+      ? '📦 入庫処理中…'
+      : '📤 使用処理中…'
+
   );
 
 
   try {
 
 
-    /*
-     * 商品検索
-     */
+    /* =================================================
+       ここでパック数を自動変更
+       
+       in  → ＋1パック
+       out → −1パック
+    ================================================= */
 
     const result =
       await sendToGAS(
-        'getProduct',
-        decodedText
+        'updateStock',
+        decodedText,
+        {
+          mode: mode
+        }
       );
 
 
     console.log(
-      '商品検索結果:',
+      '在庫更新結果:',
       result
     );
 
 
-    /*
-     * 商品がない
-     */
+    /* =================================================
+       エラー
+    ================================================= */
 
     if (
       !result.success
@@ -1158,16 +1127,16 @@ async function onScanSuccess(
 
       document
         .getElementById(
-          'productName'
+          'warning'
         )
         .textContent =
-        result.message ||
-        '商品が見つかりません';
+          result.message ||
+          '在庫の更新に失敗しました';
 
 
       showMessage(
         result.message ||
-        '商品が見つかりません。',
+        '在庫の更新に失敗しました。',
         true
       );
 
@@ -1178,27 +1147,49 @@ async function onScanSuccess(
 
 
     /*
-     * 商品情報表示
+     * 警告を消す
      */
+
+    document
+      .getElementById(
+        'warning'
+      )
+      .textContent =
+        '';
+
+
+    /* =================================================
+       更新後の商品情報を表示
+    ================================================= */
 
     displayProduct(
       result
     );
 
 
-    showMessage(
-      '📷 次のバーコードを読み取れます'
-    );
-
-
     /*
-     * =================================================
-     * 緑色表示は2秒後に消す
-     *
-     * 2秒後から次のバーコードを
-     * 読み取れるようにする
-     * =================================================
+     * メッセージ
      */
+
+    if (mode === 'in') {
+
+      showMessage(
+        '＋ パック数を1増やしました。2秒後に次を読み取れます'
+      );
+
+    }
+    else {
+
+      showMessage(
+        '− パック数を1減らしました。2秒後に次を読み取れます'
+      );
+
+    }
+
+
+    /* =================================================
+       緑色表示を2秒後に消す
+    ================================================= */
 
     setTimeout(
       function() {
@@ -1208,6 +1199,7 @@ async function onScanSuccess(
       },
       2000
     );
+
 
   }
   catch (error) {
@@ -1227,12 +1219,13 @@ async function onScanSuccess(
       true
     );
 
+
   }
   finally {
 
 
     /*
-     * 商品検索処理終了
+     * 通信処理終了
      */
 
     processing =
@@ -1325,19 +1318,17 @@ async function startScanner() {
     }
 
 
-    /*
-     * =================================================
-     * カメラ開始
-     *
-     * カメラ
-     * 400 × 200
-     *
-     * 読み取り範囲
-     * 300 × 100
-     *
-     * スマホでは自動縮小
-     * =================================================
-     */
+    /* =================================================
+       カメラ開始
+       
+       カメラ表示
+       400 × 200
+       
+       バーコード読み取り範囲
+       300 × 100
+       
+       スマホでは自動縮小
+    ================================================= */
 
     await scanner.start(
 
@@ -1347,16 +1338,6 @@ async function startScanner() {
 
         fps: 10,
 
-
-        /*
-         * カメラ400×200に対して
-         *
-         * 上下左右50px
-         *
-         * → 300×100
-         *
-         * スマホでは自動縮小
-         */
 
         qrbox:
           function(
@@ -1385,11 +1366,13 @@ async function startScanner() {
 
 
             return {
+
               width:
                 width,
 
               height:
                 height
+
             };
 
           },
