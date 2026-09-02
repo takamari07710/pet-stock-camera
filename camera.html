@@ -35,7 +35,7 @@
     .mode {
       display: flex;
       gap: 10px;
-      maxwidth: 300px;
+      maxwidth: 500px;
       margin: 15px auto;
     }
 
@@ -76,29 +76,19 @@
     ========================= */
 
     #successOverlay {
-
       display: none;
-
       position: absolute;
-
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-
       zindex: 9999;
-
       background: rgba(0, 180, 0, 0.85);
-
       color: white;
-
       alignitems: center;
       justifycontent: center;
-
       flexdirection: column;
-
       borderradius: 10px;
-
       pointerevents: none;
     }
 
@@ -137,31 +127,26 @@
       margin-bottom: 15px;
     }
 
-.stockRow {
-  display: grid;
-  grid-template-columns: 140px 80px 60px;
+    .stockRow {
+    display: grid;
+    grid-template-columns: 140px 80px 60px;
+    align-items: center;
+    width: fit-content;
+    margin: 0 auto;
+    min-height: 55px;
+    font-size: 18px;
+    border-bottom: 1px solid #ccc;
+    }
 
-  align-items: center;
+    .stockRow > span {
+    text-align: center;
+    }
 
-  width: fit-content;
-  margin: 0 auto;
-
-  min-height: 55px;
-
-  font-size: 18px;
-
-  border-bottom: 1px solid #ccc;
-}
-
-.stockRow > span {
-  text-align: center;
-}
-
-.stockValue {
-  font-size: 24px;
-  font-weight: bold;
-  text-align: center;
-}
+    .stockValue {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    }
 
 
     /* =========================
@@ -171,9 +156,7 @@
     .remainderArea {
       margin-top: 18px;
       padding: 15px;
-
       background: #f1f8ff;
-
       border-radius: 10px;
     }
 
@@ -184,19 +167,12 @@
     }
 
     #remainderInput {
-
       width: 120px;
-
       padding: 12px;
-
       font-size: 24px;
-
       text-align: center;
-
       border: 2px solid #2196f3;
-
       border-radius: 8px;
-
       box-sizing: border-box;
     }
 
@@ -206,36 +182,22 @@
     }
 
     #confirmButton {
-
       display: block;
-
       width: 100%;
-
       margin-top: 15px;
-
       padding: 15px;
-
       font-size: 20px;
-
       font-weight: bold;
-
       border: none;
-
       border-radius: 10px;
-
       background: #4caf50;
-
       color: white;
-
       cursor: pointer;
     }
 
     #confirmButton:disabled {
-
       background: #aaa;
-
       color: #eee;
-
       cursor: not-allowed;
     }
 
@@ -244,13 +206,9 @@
     ========================= */
 
     .totalArea {
-
       margin-top: 15px;
-
       padding: 12px;
-
       background: #fff8e1;
-
       border-radius: 10px;
     }
 
@@ -259,57 +217,46 @@
     }
 
     #total {
-
       font-size: 36px;
-
       font-weight: bold;
-
       margin-top: 5px;
     }
 
+    
     /* =========================
        警告
     ========================= */
 
     #warning {
-
       margin-top: 10px;
-
       color: #d32f2f;
-
       font-weight: bold;
     }
 
+    
     /* =========================
        メッセージ
     ========================= */
 
     #message {
-
       max-width: 500px;
-
       margin: 15px auto;
-
       padding: 15px;
-
       border-radius: 10px;
-
       background: #e8f5e9;
     }
 
     #message.error {
-
       background: #ffebee;
-
       color: #c62828;
     }
 
+    
   </style>
-
 </head>
 
+  
 <body>
-
 <h1>🐾 ペットシーツ在庫</h1>
 
 <!-- =========================
@@ -317,107 +264,78 @@
 ========================= -->
 
 <div class="mode">
-
 <button
  id="inButton"
  class="active"
  onclick="setMode('in')">
-
 ＋ 入庫
-
   </button>
 
 <button
  id="outButton"
  onclick="setMode('out')">
-
 − 使用
-
   </button>
-
 </div>
 
 <!-- =========================
      カメラ
 ========================= -->
-
 <div id="cameraArea">
-
   <div id="reader"></div>
-
-  <div id="successOverlay">
-
-<div class="icon">
-  ✓
-</div>
-
-<div class="title">
-  読み取り成功
-</div>
-
-<div
-  class="code"
-  id="successCode">
-</div>
-
+    <div id="successOverlay">
+      <div class="icon">
+        ✓
+      </div>
+      <div class="title">
+      読み取り成功
+      </div>
+    <div
+      class="code"
+    id="successCode">
+    </div>
   </div>
-
 </div>
 
+  
 <!-- =========================
      商品情報
 ========================= -->
-
 <div class="result">
-
   <div id="productName">
     バーコードを読み取ってください
   </div>
-
   <div class="stockRow">
-
-
-<span>
-  パック数
-</span>
-
-<span
-  class="stockValue"
-  id="packCount">
-  -
-</span>
-
-<span>
-  パック
-</span>
-
-
+    <span>
+      パック数
+    </span>
+    <span
+      class="stockValue"
+      id="packCount">
+      -
+    </span>
+    <span>
+      パック
+    </span>
   </div>
-
   <div class="stockRow">
+    <span>
+    1パックあたり
+    </span>
+    <span
+      class="stockValue"
+      id="perPack">
+      -
+    </span>
+    <span>
+      個
+    </span>
+    </div>
 
-
-<span>
-  1パックあたり
-</span>
-
-<span
-  class="stockValue"
-  id="perPack">
-  -
-</span>
-
-<span>
-  個
-</span>
-
-
-  </div>
-
+  
   <!-- =========================
        端数入力
   ========================= -->
-
   <div
     class="remainderArea"
     id="remainderArea"
@@ -462,19 +380,14 @@
 <div class="totalLabel">
   合計
 </div>
-
 <div id="total">
   -
 </div>
-
 <div>
   個
 </div>
-
   </div>
-
   <div id="warning"></div>
-
 </div>
 
 <!-- =========================
@@ -484,7 +397,6 @@
 <div id="message">
   カメラを準備しています…
 </div>
-
 <script>
 
 
@@ -501,17 +413,11 @@ const GAS_URL =
 ================================================= */
 
 let scanner = null;
-
 let mode = 'in';
-
 let processing = false;
-
 let lastCode = '';
-
 let lastScanTime = 0;
-
 let currentJAN = '';
-
 let currentProduct = null;
 
 
@@ -1525,34 +1431,22 @@ async function startScanner() {
      */
 
     await scanner.start(
-
       cameraId,
-
       {
-
         fps: 10,
-
         qrbox: {
-
           width: 300,
-
-          height: 150
-
+          height: 100
         },
 
         formatsToSupport: [
-
           Html5QrcodeSupportedFormats
             .EAN_13,
-
           Html5QrcodeSupportedFormats
             .EAN_8,
-
           Html5QrcodeSupportedFormats
             .UPC_A
-
         ]
-
       },
 
 
