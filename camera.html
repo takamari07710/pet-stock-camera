@@ -3,178 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ペットシーツ在庫</title>
-
+  <title>ペットシーツ在庫　v2</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
-
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 15px;
-      background: #f5f5f5;
-      color: #222;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 24px;
-      margin: 10px 0 15px;
-    }
-
-    .mode {
-      display: flex;
-      gap: 10px;
-      width: 100%;
-      max-width: 500px;
-      margin: 15px auto;
-    }
-
-    .mode button {
-      flex: 1;
-      padding: 15px;
-      font-size: 18px;
-      border: none;
-      border-radius: 10px;
-      background: #ddd;
-      cursor: pointer;
-    }
-
-    .mode button.active {
-      background: #2196f3;
-      color: white;
-    }
-
-    #cameraArea {
-      position: relative;
-      width: 400px;
-      height: 200px;
-      max-width: 100%;
-      margin: auto;
-      box-sizing: border-box;
-    }
-
-    #reader {
-      width: 100%;
-      height: 200px;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-
-    #reader video {
-      width: 100% !important;
-      height: 200px !important;
-      object-fit: cover;
-      display: block;
-    }
-
-    #successOverlay {
-      display: none;
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 9999;
-      background: rgba(0, 180, 0, 0.85);
-      color: white;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      border-radius: 10px;
-      pointer-events: none;
-    }
-
-    #successOverlay .icon {
-      font-size: 80px;
-      font-weight: bold;
-      line-height: 1;
-    }
-
-    #successOverlay .title {
-      font-size: 30px;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-
-    #successOverlay .code {
-      font-size: 18px;
-      margin-top: 10px;
-    }
-
-    .result {
-      width: 100%;
-      max-width: 500px;
-      box-sizing: border-box;
-      margin: 15px auto;
-      padding: 18px;
-      background: white;
-      border-radius: 10px;
-    }
-
-    #productName {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 15px;
-    }
-
-    #message {
-      width: 100%;
-      box-sizing: border-box;
-      margin: 15px auto;
-      padding: 15px;
-      border-radius: 10px;
-      background: #e8f5e9;
-    }
-
-    #message.error {
-      background: #ffebee;
-      color: #c62828;
-    }
-
-    #remainderPageButton {
-      display: block;
-      width: 100%;
-      margin-top: 18px;
-      padding: 15px;
-      font-size: 20px;
-      font-weight: bold;
-      border: none;
-      border-radius: 10px;
-      background: #ff9800;
-      color: white;
-      cursor: pointer;
-    }
-
-    #stockListButton {
-      width: 100%;
-      max-width: 500px;
-      margin: 20px auto 10px;
-      padding: 15px;
-      font-size: 20px;
-      font-weight: bold;
-      border: none;
-      border-radius: 10px;
-      background: #607d8b;
-      color: white;
-      cursor: pointer;
-    }
-
-    @media (max-width: 430px) {
-      body { padding: 10px; }
-      h1 { font-size: 22px; }
-      #cameraArea { width: 100%; height: 200px; }
-      #reader { width: 100%; height: 200px; }
-      #reader video { width: 100% !important; height: 200px !important; }
-    }
+    body { font-family: sans-serif; margin: 0; padding: 15px; background: #f5f5f5; color: #222; text-align: center; }
+    h1 { font-size: 24px; margin: 10px 0 15px; }
+    .mode { display: flex; gap: 10px; width: 100%; max-width: 500px; margin: 15px auto; }
+    .mode button { flex: 1; padding: 15px; font-size: 18px; border: none; border-radius: 10px; background: #ddd; cursor: pointer; }
+    .mode button.active { background: #2196f3; color: white; }
+    #cameraArea { position: relative; width: 400px; height: 200px; max-width: 100%; margin: auto; box-sizing: border-box; }
+    #reader { width: 100%; height: 200px; background: white; border-radius: 10px; overflow: hidden; }
+    #reader video { width: 100% !important; height: 200px !important; object-fit: cover; }
+    .result { width: 100%; max-width: 500px; margin: 15px auto; padding: 18px; background: white; border-radius: 10px; box-sizing: border-box; }
+    #productName { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+    #message { width: 100%; margin: 10px auto; padding: 12px; border-radius: 8px; background: #e8f5e9; font-size: 14px; word-break: break-all; }
+    #message.error { background: #ffebee; color: #c62828; }
   </style>
 </head>
-
 <body>
 
-<h1>🐾 ペットシーツ在庫 v1</h1>
+<h1>🐾 ペットシーツ在庫</h1>
 
 <div class="mode">
   <button id="inButton" class="active" onclick="setMode('in')">＋ 入庫</button>
@@ -183,89 +31,56 @@
 
 <div id="cameraArea">
   <div id="reader"></div>
-  <div id="successOverlay">
-    <div class="icon">✓</div>
-    <div class="title">読み取り成功</div>
-    <div class="code" id="successCode"></div>
-  </div>
 </div>
 
 <div class="result">
-  <div id="productName">バーコードを読み取ってください</div>
-  <div id="message">カメラを準備しています…</div>
-
-  <button id="remainderPageButton" type="button" onclick="location.href='remainder.html'">
-    ✏️ 端数を入力する
-  </button>
+  <div id="productName">バーコードをかざしてください</div>
+  <div id="message">カメラ準備中...</div>
 </div>
 
-<button id="stockListButton" type="button" onclick="location.href='stock.html'">
-  📦 在庫一覧を見る
-</button>
-
 <script>
-/* =================================================
-   GAS URL
-================================================= */
-const GAS_URL =
-  'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPr4A/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPr4A/exec';
 
-let scanner = null;
 let mode = 'in';
 let processing = false;
 
-function setMode(newMode) {
-  mode = newMode;
-  document.getElementById('inButton').classList.toggle('active', mode === 'in');
-  document.getElementById('outButton').classList.toggle('active', mode === 'out');
-  showMessage(mode === 'in' ? '＋ 入庫モード' : '− 使用モード');
+function setMode(m) {
+  mode = m;
+  document.getElementById('inButton').className = m === 'in' ? 'active' : '';
+  document.getElementById('outButton').className = m === 'out' ? 'active' : '';
+  showMessage(m === 'in' ? '＋ 入庫モード' : '− 使用モード');
 }
 
 function showMessage(text, isError = false) {
-  const msgEl = document.getElementById('message');
-  msgEl.textContent = text;
-  msgEl.className = isError ? 'error' : '';
+  const msg = document.getElementById('message');
+  msg.textContent = text;
+  msg.className = isError ? 'error' : '';
 }
 
-function showSuccessOverlay(code) {
-  document.getElementById('successCode').textContent = code;
-  document.getElementById('successOverlay').style.display = 'flex';
-}
-
-function hideSuccessOverlay() {
-  document.getElementById('successOverlay').style.display = 'none';
-}
-
-/* =================================================
-   GAS 通信 (JSONP) - 単純化構造
-================================================= */
 function sendToGAS(action, jan) {
   return new Promise((resolve, reject) => {
     const callbackName = 'gasCB_' + Date.now();
     const script = document.createElement('script');
 
-    // タイムアウト監視 (15秒)
-    const timeoutId = setTimeout(() => {
+    const timer = setTimeout(() => {
       cleanup();
-      reject(new Error('通信がタイムアウトしました。もう一度お試しください。'));
-    }, 15000);
+      reject(new Error('【タイムアウト】GASからの返答がありません。URLまたはデプロイ設定(アクセス制限)を確認してください。'));
+    }, 12000);
 
     function cleanup() {
-      clearTimeout(timeoutId);
+      clearTimeout(timer);
       delete window[callbackName];
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
+      if (script.parentNode) script.parentNode.removeChild(script);
     }
 
-    window[callbackName] = function(result) {
+    window[callbackName] = function(res) {
       cleanup();
-      resolve(result);
+      resolve(res);
     };
 
-    script.onerror = function() {
+    script.onerror = function(e) {
       cleanup();
-      reject(new Error('GASとの通信に失敗しました。'));
+      reject(new Error('【通信遮断】GASへの接続がブロックされました。アクセス権限が「全員」になっているか確認してください。'));
     };
 
     const url = GAS_URL +
@@ -279,65 +94,42 @@ function sendToGAS(action, jan) {
   });
 }
 
-/* =================================================
-   スキャン成功時の処理
-================================================= */
 async function onScanSuccess(decodedText) {
   if (processing) return;
-
-  const cleanCode = String(decodedText).trim();
   processing = true;
 
-  showSuccessOverlay(cleanCode);
-  showMessage(mode === 'in' ? 'データを送信中 (入庫)…' : 'データを送信中 (使用)…');
+  const code = String(decodedText).trim();
+  showMessage('読み取り: ' + code + ' -> 通信開始...');
 
   try {
-    const res = await sendToGAS('updateStock', cleanCode);
-
+    const res = await sendToGAS('updateStock', code);
     if (res.success) {
-      document.getElementById('productName').textContent = res.name || '商品名未登録';
-      showMessage(`【${mode === 'in' ? '入庫完了' : '使用完了'}】 パック数: ${res.packCount} (合計: ${res.total})`);
+      document.getElementById('productName').textContent = res.name || '商品名未設定';
+      showMessage(`【完了】パック数: ${res.packCount} (合計: ${res.total})`);
     } else {
-      document.getElementById('productName').textContent = res.name || 'エラー';
-      showMessage(res.message || 'エラーが発生しました', true);
+      document.getElementById('productName').textContent = 'エラー';
+      showMessage('GASからのエラー: ' + (res.message || '不明なエラー'), true);
     }
   } catch (err) {
+    document.getElementById('productName').textContent = '通信失敗';
     showMessage(err.message, true);
   } finally {
-    setTimeout(() => {
-      hideSuccessOverlay();
-      processing = false;
-    }, 1500);
+    setTimeout(() => { processing = false; }, 2000);
   }
 }
 
-/* =================================================
-   カメラの起動
-================================================= */
-function startCamera() {
-  scanner = new Html5Qrcode("reader");
-
-  const config = {
-    fps: 10,
-    qrbox: { width: 250, height: 150 },
-    formatsToSupport: [
-      Html5QrcodeSupportedFormats.EAN_13,
-      Html5QrcodeSupportedFormats.EAN_8
-    ]
-  };
-
+window.addEventListener('DOMContentLoaded', () => {
+  const scanner = new Html5Qrcode("reader");
   scanner.start(
     { facingMode: "environment" },
-    config,
+    { fps: 10, qrbox: { width: 250, height: 150 } },
     onScanSuccess
   ).then(() => {
-    showMessage('カメラ準備完了');
-  }).catch((err) => {
-    showMessage('カメラの起動に失敗しました', true);
+    showMessage('カメラ起動完了。スキャンできます。');
+  }).catch(err => {
+    showMessage('カメラ起動エラー: ' + err, true);
   });
-}
-
-window.addEventListener('DOMContentLoaded', startCamera);
+});
 </script>
 </body>
 </html>
