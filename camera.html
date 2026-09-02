@@ -24,7 +24,7 @@
     }
 
     h1 {
-      font-size: 24px;
+      fontsize: 24px;
       margin: 10px 0 15px;
     }
 
@@ -35,16 +35,16 @@
     .mode {
       display: flex;
       gap: 10px;
-      max-width: 500px;
+      maxwidth: 500px;
       margin: 15px auto;
     }
 
     .mode button {
       flex: 1;
       padding: 15px;
-      font-size: 18px;
+      fontsize: 18px;
       border: none;
-      border-radius: 10px;
+      borderradius: 10px;
       background: #ddd;
     }
 
@@ -60,14 +60,14 @@
     #cameraArea {
       position: relative;
       width: 100%;
-      max-width: 500px;
+      maxwidth: 500px;
       margin: auto;
     }
 
     #reader {
       width: 100%;
       background: white;
-      border-radius: 10px;
+      borderradius: 10px;
       overflow: hidden;
     }
 
@@ -86,37 +86,37 @@
       right: 0;
       bottom: 0;
 
-      z-index: 9999;
+      zindex: 9999;
 
       background: rgba(0, 180, 0, 0.85);
 
       color: white;
 
-      align-items: center;
-      justify-content: center;
+      alignitems: center;
+      justifycontent: center;
 
-      flex-direction: column;
+      flexdirection: column;
 
-      border-radius: 10px;
+      borderradius: 10px;
 
-      pointer-events: none;
+      pointerevents: none;
     }
 
     #successOverlay .icon {
-      font-size: 80px;
-      font-weight: bold;
-      line-height: 1;
+      fontsize: 80px;
+      fontweight: bold;
+      lineheight: 1;
     }
 
     #successOverlay .title {
-      font-size: 30px;
-      font-weight: bold;
-      margin-top: 10px;
+      fontsize: 30px;
+      fontweight: bold;
+      margintop: 10px;
     }
 
     #successOverlay .code {
-      font-size: 18px;
-      margin-top: 10px;
+      fontsize: 18px;
+      margintop: 10px;
     }
 
     /* =========================
@@ -124,11 +124,11 @@
     ========================= */
 
     .result {
-      max-width: 500px;
+      maxwidth: 500px;
       margin: 15px auto;
       padding: 18px;
       background: white;
-      border-radius: 10px;
+      borderradius: 10px;
     }
 
     #productName {
@@ -137,22 +137,23 @@
       margin-bottom: 15px;
     }
 
-    .stockRow {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+.stockRow {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 
-      padding: 8px 0;
+  padding: 12px 0;
 
-      font-size: 18px;
+  font-size: 18px;
 
-      border-bottom: 1px solid #ddd;
-    }
+  border-bottom: 1px solid #ddd;
+}
 
-    .stockValue {
-      font-size: 24px;
-      font-weight: bold;
-    }
+.stockRow .stockValue {
+  margin: 3px 0;
+}
+
 
     /* =========================
        端数入力
