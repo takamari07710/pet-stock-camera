@@ -5,7 +5,9 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1">
   <title>ペットシーツ在庫</title>
+
   <script src="https://unpkg.com/html5-qrcode"></script>
+
   <style>
     body {
       font-family: sans-serif;
@@ -15,6 +17,7 @@
       color: #222;
       text-align: center;
     }
+
     /* =================================================
        タイトル
     ================================================= */
@@ -22,6 +25,7 @@
       font-size: 24px;
       margin: 10px 0 15px;
     }
+
     /* =================================================
        入庫・使用
     ================================================= */
@@ -32,6 +36,7 @@
       max-width: 500px;
       margin: 15px auto;
     }
+
     .mode button {
       flex: 1;
       padding: 15px;
@@ -41,10 +46,12 @@
       background: #ddd;
       cursor: pointer;
     }
+
     .mode button.active {
       background: #2196f3;
       color: white;
     }
+
     /* =================================================
        カメラ
     ================================================= */
@@ -56,6 +63,7 @@
       margin: auto;
       box-sizing: border-box;
     }
+
     #reader {
       width: 100%;
       height: 200px;
@@ -64,12 +72,14 @@
       overflow: hidden;
       box-sizing: border-box;
     }
+
     #reader video {
       width: 100% !important;
       height: 200px !important;
       object-fit: cover;
       display: block;
     }
+
     /* =================================================
        読み取り成功表示
     ================================================= */
@@ -89,20 +99,24 @@
       border-radius: 10px;
       pointer-events: none;
     }
+
     #successOverlay .icon {
       font-size: 80px;
       font-weight: bold;
       line-height: 1;
     }
+
     #successOverlay .title {
       font-size: 30px;
       font-weight: bold;
       margin-top: 10px;
     }
+
     #successOverlay .code {
       font-size: 18px;
       margin-top: 10px;
     }
+
     /* =================================================
        商品情報
     ================================================= */
@@ -115,6 +129,7 @@
       background: white;
       border-radius: 10px;
     }
+
     #productName {
       font-size: 24px;
       font-weight: bold;
@@ -122,7 +137,24 @@
     }
 
     /* =================================================
-       端数入力ページへのボタン
+       メッセージ
+    ================================================= */
+    #message {
+      width: 100%;
+      box-sizing: border-box;
+      margin: 15px auto;
+      padding: 15px;
+      border-radius: 10px;
+      background: #e8f5e9;
+    }
+
+    #message.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    /* =================================================
+       端数入力ページ
     ================================================= */
     #remainderPageButton {
       display: block;
@@ -146,24 +178,9 @@
       color: #d32f2f;
       font-weight: bold;
     }
+
     /* =================================================
-       メッセージ
-    ================================================= */
-    #message {
-      width: 100%;
-      max-width: 500px;
-      box-sizing: border-box;
-      margin: 15px auto;
-      padding: 15px;
-      border-radius: 10px;
-      background: #e8f5e9;
-    }
-    #message.error {
-      background: #ffebee;
-      color: #c62828;
-    }
-    /* =================================================
-       在庫一覧ボタン
+       在庫一覧
     ================================================= */
     #stockListButton {
       width: 100%;
@@ -178,37 +195,39 @@
       color: white;
       cursor: pointer;
     }
+
     /* =================================================
        スマホ
     ================================================= */
     @media (max-width: 430px) {
+
       body {
         padding: 10px;
       }
+
       h1 {
         font-size: 22px;
       }
-      .stockRow {
-        font-size: 16px;
-      }
-      .stockValue {
-        font-size: 22px;
-      }
+
       #successOverlay .icon {
         font-size: 65px;
       }
+
       #successOverlay .title {
         font-size: 25px;
       }
+
       #cameraArea {
         width: 100%;
         max-width: 400px;
         height: 200px;
       }
+
       #reader {
         width: 100%;
         height: 200px;
       }
+
       #reader video {
         width: 100% !important;
         height: 200px !important;
@@ -216,86 +235,83 @@
     }
   </style>
 </head>
+
 <body>
+
 <h1>🐾 ペットシーツ在庫</h1>
+
 <!-- =================================================
      入庫・使用
 ================================================= -->
 <div class="mode">
+
   <button
     id="inButton"
     class="active"
     onclick="setMode('in')">
     ＋ 入庫
   </button>
+
   <button
     id="outButton"
     onclick="setMode('out')">
     − 使用
   </button>
+
 </div>
+
 <!-- =================================================
      カメラ
 ================================================= -->
 <div id="cameraArea">
+
   <div id="reader"></div>
+
   <div id="successOverlay">
+
     <div class="icon">
       ✓
     </div>
+
     <div class="title">
       読み取り成功
     </div>
+
     <div
       class="code"
       id="successCode">
     </div>
+
   </div>
+
 </div>
+
 <!-- =================================================
      商品情報
 ================================================= -->
 <div class="result">
+
   <div id="productName">
     バーコードを読み取ってください
   </div>
-  <div class="stockRow">
 
-  <!-- =================================================
-       合計
-  ================================================= -->
-  <div
-    class="totalArea"
-    id="totalArea"
-    style="display:none;">
-    <div class="totalLabel">
-      合計
-    </div>
-    <div id="total">
-      -
-    </div>
-    <div>
-      個
-    </div>
+  <!-- メッセージ -->
+  <div id="message">
+    カメラを準備しています…
   </div>
 
-<!-- =================================================
-     メッセージ
-================================================= -->
-<div id="message">
-  カメラを準備しています…
-</div>
-  <!-- =================================================
-       端数入力ページ
-  ================================================= -->
+  <!-- 端数入力 -->
   <button
     id="remainderPageButton"
     type="button"
     onclick="location.href='remainder.html'">
     ✏️ 端数を入力する
   </button>
+
   <div id="warning"></div>
+
 </div>
+
 <!-- =================================================
      在庫一覧
 ================================================= -->
@@ -305,31 +321,65 @@
   onclick="location.href='stock.html'">
   📦 在庫一覧を見る
 </button>
+
+
 <script>
+
 /* =================================================
    GAS URL
 ================================================= */
+
 const GAS_URL =
-  'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec';
+  'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPr4A/exec';
+
+
 /* =================================================
    変数
 ================================================= */
+
 let scanner = null;
-let mode = 'in';
-let processing = false;
+
 /*
- * 最後に読み取ったJAN
+ * 現在のモード
+ *
+ * in  = 入庫
+ * out = 使用
+ */
+let mode = 'in';
+
+
+/*
+ * GAS通信中かどうか
+ *
+ * true  = 次の読み取りを受け付けない
+ * false = 次の読み取りを受け付ける
+ */
+let processing = false;
+
+
+/*
+ * 最後に成功したJAN
  */
 let lastCode = '';
+
 /*
- * 最後に読み取った時間
+ * 最後に成功した時間
+ *
+ * 「読み取り開始時」ではなく
+ * 「スプレッドシート書き込み成功時」に
+ * 更新するのがポイント
  */
 let lastScanTime = 0;
+
+
 /* =================================================
    入庫・使用モード
 ================================================= */
+
 function setMode(newMode) {
+
   mode = newMode;
+
   document
     .getElementById('inButton')
     .classList
@@ -337,6 +387,7 @@ function setMode(newMode) {
       'active',
       mode === 'in'
     );
+
   document
     .getElementById('outButton')
     .classList
@@ -344,68 +395,92 @@ function setMode(newMode) {
       'active',
       mode === 'out'
     );
+
   showMessage(
     mode === 'in'
       ? '＋ 入庫モード'
       : '− 使用モード'
   );
 }
+
+
 /* =================================================
    メッセージ
 ================================================= */
+
 function showMessage(
   text,
   error = false
 ) {
+
   const message =
     document.getElementById(
       'message'
     );
+
   message.textContent =
     text;
+
   message.className =
     error
       ? 'error'
       : '';
 }
+
+
 /* =================================================
    読み取り成功表示
 ================================================= */
+
 function showSuccessOverlay(code) {
+
   const overlay =
     document.getElementById(
       'successOverlay'
     );
+
   const codeElement =
     document.getElementById(
       'successCode'
     );
+
   codeElement.textContent =
     code;
+
   overlay.style.display =
     'flex';
 }
+
+
 /* =================================================
    緑色表示を消す
 ================================================= */
+
 function hideSuccessOverlay() {
+
   const overlay =
     document.getElementById(
       'successOverlay'
     );
+
   overlay.style.display =
     'none';
 }
+
+
 /* =================================================
    GAS通信
 ================================================= */
+
 function sendToGAS(
   action,
   jan,
   extraParams = {}
 ) {
+
   return new Promise(
     function(resolve, reject) {
+
       const callbackName =
         'gasCallback_' +
         Date.now() +
@@ -413,52 +488,76 @@ function sendToGAS(
         Math.floor(
           Math.random() * 100000
         );
+
+
       const script =
         document.createElement(
           'script'
         );
+
+
       let finished = false;
-      /*
-       * GAS返答
-       */
+
+
+      /* =================================================
+         GAS返答
+      ================================================= */
+
       window[callbackName] =
         function(result) {
+
           if (finished) {
             return;
           }
+
           finished = true;
+
           console.log(
             'GAS返答:',
             result
           );
+
           delete window[
             callbackName
           ];
+
           script.remove();
+
           resolve(result);
         };
-      /*
-       * 通信エラー
-       */
+
+
+      /* =================================================
+         通信エラー
+      ================================================= */
+
       script.onerror =
         function() {
+
           if (finished) {
             return;
           }
+
           finished = true;
+
           delete window[
             callbackName
           ];
+
           script.remove();
+
           reject(
             new Error(
               'GASとの通信に失敗しました'
             )
           );
         };
-      /*
-       * URL
-       */
+
+
+      /* =================================================
+         URL作成
+      ================================================= */
+
       let url =
         GAS_URL +
         '?action=' +
@@ -473,38 +572,55 @@ function sendToGAS(
         encodeURIComponent(
           callbackName
         );
-      /*
-       * 追加パラメータ
-       */
+
+
+      /* =================================================
+         追加パラメータ
+      ================================================= */
+
       for (
         const key in extraParams
       ) {
+
         url +=
           '&' +
-          encodeURIComponent(key) +
+          encodeURIComponent(
+            key
+          ) +
           '=' +
           encodeURIComponent(
             extraParams[key]
           );
       }
+
+
       console.log(
         'GAS送信:',
         url
       );
+
+
       script.src =
         url;
+
+
       document
         .body
         .appendChild(
           script
         );
+
     }
   );
 }
+
+
 /* =================================================
    商品情報表示
 ================================================= */
+
 function displayProduct(result) {
+
   document
     .getElementById(
       'productName'
@@ -513,64 +629,86 @@ function displayProduct(result) {
       result.name ||
       result.productName ||
       '-';
-
 }
+
+
 /* =================================================
    JAN読み取り成功
 ================================================= */
+
 async function onScanSuccess(
   decodedText
 ) {
+
   const now =
     Date.now();
+
+
   /* =================================================
-     同じバーコードは2秒以内に読まない
+     通信中なら無視
+     
+     ↓
+     GASへの書き込みが完了するまで
+     次のバーコードは受け付けない
   ================================================= */
+
+  if (processing) {
+    return;
+  }
+
+
+  /* =================================================
+     同じバーコードの連続読み取り防止
+     
+     ※前回は「読み取り開始時」だったが、
+       今回は「書き込み成功時」から2秒
+  ================================================= */
+
   if (
     decodedText === lastCode &&
     now - lastScanTime < 2000
   ) {
+
     return;
   }
+
+
   /* =================================================
-     通信処理中なら無視
+     通信処理開始
   ================================================= */
-  if (processing) {
-    return;
-  }
-  /*
-   * 最後に読み取ったJANと時間を保存
-   */
-  lastCode =
-    decodedText;
-  lastScanTime =
-    now;
-  /*
-   * 通信中
-   */
-  processing =
-    true;
-  /*
-   * 緑色表示
-   */
+
+  processing = true;
+
+
+  /* =================================================
+     緑色表示
+  ================================================= */
+
   showSuccessOverlay(
     decodedText
   );
-  /*
-   * モード表示
-   */
+
+
+  /* =================================================
+     処理中表示
+  ================================================= */
+
   showMessage(
     mode === 'in'
-      ? '📦 入庫処理中…'
-      : '📤 使用処理中…'
+      ? '📦 スプレッドシートに入庫を書き込んでいます…'
+      : '📤 スプレッドシートに使用を書き込んでいます…'
   );
+
+
   try {
+
     /* =================================================
-       ここでパック数を自動変更
+       GASへ在庫更新
        
        in  → ＋1パック
        out → −1パック
     ================================================= */
+
     const result =
       await sendToGAS(
         'updateStock',
@@ -579,162 +717,255 @@ async function onScanSuccess(
           mode: mode
         }
       );
+
+
     console.log(
       '在庫更新結果:',
       result
     );
+
+
     /* =================================================
-       エラー
+       GAS側でエラー
     ================================================= */
+
     if (
+      !result ||
       !result.success
     ) {
+
       hideSuccessOverlay();
+
       document
         .getElementById(
           'warning'
         )
         .textContent =
-          result.message ||
-          '在庫の更新に失敗しました';
+          result &&
+          result.message
+            ? result.message
+            : '在庫の更新に失敗しました';
+
       showMessage(
-        result.message ||
-        '在庫の更新に失敗しました。',
+        result &&
+        result.message
+          ? result.message
+          : '在庫の更新に失敗しました。',
         true
       );
+
       return;
     }
-    /*
-     * 警告を消す
-     */
+
+
+    /* =================================================
+       ★ここが重要
+       
+       スプレッドシートへの書き込み成功
+       
+       この時点で次のバーコードを
+       読み取れる状態にする
+    ================================================= */
+
+    processing = false;
+
+
+    /* =================================================
+       成功したJANと時間を保存
+       
+       この時点から2秒間だけ
+       同じJANを無視する
+    ================================================= */
+
+    lastCode =
+      decodedText;
+
+    lastScanTime =
+      Date.now();
+
+
+    /* =================================================
+       警告を消す
+    ================================================= */
+
     document
       .getElementById(
         'warning'
       )
       .textContent =
         '';
+
+
     /* =================================================
-       更新後の商品情報を表示
+       商品名表示
     ================================================= */
+
     displayProduct(
       result
     );
-    /*
-     * メッセージ
-     */
+
+
+    /* =================================================
+       緑色表示をすぐ消す
+       
+       2秒待たない
+    ================================================= */
+
+    hideSuccessOverlay();
+
+
+    /* =================================================
+       次のバーコードをすぐ読めることを表示
+    ================================================= */
+
     if (mode === 'in') {
+
       showMessage(
-        '＋ パック数を1増やしました。2秒後に次を読み取れます'
+        '✓ 入庫しました。次のバーコードを読み取れます'
       );
+
     }
     else {
+
       showMessage(
-        '− パック数を1減らしました。2秒後に次を読み取れます'
+        '✓ 使用しました。次のバーコードを読み取れます'
       );
+
     }
-    /* =================================================
-       緑色表示を2秒後に消す
-    ================================================= */
-    setTimeout(
-      function() {
-        hideSuccessOverlay();
-      },
-      2000
-    );
+
   }
   catch (error) {
+
     console.error(
       error
     );
+
+
     hideSuccessOverlay();
+
+
     showMessage(
       error.message ||
       '通信エラーが発生しました。',
       true
     );
+
   }
   finally {
+
     /*
-     * 通信処理終了
+     * 成功時は上ですでにfalse。
+     *
+     * エラー時はこちらでfalseにして
+     * 再度読み取れるようにする。
      */
-    processing =
-      false;
+
+    processing = false;
+
   }
+
 }
+
+
 /* =================================================
    カメラ起動
 ================================================= */
+
 async function startScanner() {
+
   try {
+
     showMessage(
       'カメラを起動しています…'
     );
+
+
     scanner =
       new Html5Qrcode(
         'reader'
       );
-    /*
-     * カメラ一覧
-     */
+
+
+    /* =================================================
+       カメラ一覧
+    ================================================= */
+
     const cameras =
       await Html5Qrcode
         .getCameras();
+
+
     if (
       !cameras ||
       cameras.length === 0
     ) {
+
       throw new Error(
         'カメラが見つかりません'
       );
+
     }
-    /*
-     * 最初のカメラ
-     */
+
+
+    /* =================================================
+       最初のカメラ
+    ================================================= */
+
     let cameraId =
       cameras[0].id;
-    /*
-     * 背面カメラ優先
-     */
+
+
+    /* =================================================
+       背面カメラ優先
+    ================================================= */
+
     for (
       const camera
       of cameras
     ) {
+
       const label =
         (
           camera.label ||
           ''
         ).toLowerCase();
+
+
       if (
         label.includes('back') ||
         label.includes('rear') ||
         label.includes('environment') ||
         label.includes('背面')
       ) {
+
         cameraId =
           camera.id;
+
         break;
+
       }
+
     }
+
+
     /* =================================================
        カメラ開始
-       
-       カメラ表示
-       400 × 200
-       
-       バーコード読み取り範囲
-       300 × 100
-       
-       スマホでは自動縮小
     ================================================= */
+
     await scanner.start(
+
       cameraId,
+
       {
+
         fps: 10,
+
         qrbox:
           function(
             viewfinderWidth,
             viewfinderHeight
           ) {
+
             const width =
               Math.min(
                 300,
@@ -743,6 +974,8 @@ async function startScanner() {
                   viewfinderWidth - 100
                 )
               );
+
+
             const height =
               Math.min(
                 100,
@@ -751,57 +984,89 @@ async function startScanner() {
                   viewfinderHeight - 100
                 )
               );
+
+
             return {
+
               width:
                 width,
+
               height:
                 height
+
             };
+
           },
+
         formatsToSupport: [
+
           Html5QrcodeSupportedFormats
             .EAN_13,
+
           Html5QrcodeSupportedFormats
             .EAN_8,
+
           Html5QrcodeSupportedFormats
             .UPC_A
+
         ]
+
       },
-      /*
-       * 読み取り成功
-       */
+
+      /* =================================================
+         読み取り成功
+      ================================================= */
+
       onScanSuccess,
-      /*
-       * 読み取り失敗
-       */
+
+
+      /* =================================================
+         読み取り失敗
+      ================================================= */
+
       function() {
         // 無視
       }
+
     );
+
+
     showMessage(
       '📷 バーコードを映してください'
     );
+
   }
   catch (error) {
+
     console.error(
       error
     );
+
     showMessage(
       'カメラを起動できません：' +
       error.message,
       true
     );
+
   }
+
 }
+
+
 /* =================================================
    ページ読み込み
 ================================================= */
+
 window.addEventListener(
   'load',
   function() {
+
     startScanner();
+
   }
 );
+
 </script>
+
 </body>
 </html>
