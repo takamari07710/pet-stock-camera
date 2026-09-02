@@ -120,21 +120,7 @@
       font-weight: bold;
       margin-bottom: 15px;
     }
-    /* =================================================
-       在庫表示
-    ================================================= */
-    .stockRow {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      font-size: 18px;
-      border-bottom: 1px solid #ddd;
-    }
-    .stockValue {
-      font-size: 24px;
-      font-weight: bold;
-    }
+
     /* =================================================
        端数入力ページへのボタン
     ================================================= */
@@ -151,23 +137,7 @@
       color: white;
       cursor: pointer;
     }
-    /* =================================================
-       合計
-    ================================================= */
-    .totalArea {
-      margin-top: 15px;
-      padding: 12px;
-      background: #fff8e1;
-      border-radius: 10px;
-    }
-    .totalLabel {
-      font-size: 18px;
-    }
-    #total {
-      font-size: 36px;
-      font-weight: bold;
-      margin-top: 5px;
-    }
+
     /* =================================================
        警告
     ================================================= */
@@ -542,30 +512,7 @@ function displayProduct(result) {
       result.name ||
       result.productName ||
       '-';
-  document
-    .getElementById(
-      'packCount'
-    )
-    .textContent =
-      result.packCount;
-  document
-    .getElementById(
-      'perPack'
-    )
-    .textContent =
-      result.perPack;
-  document
-    .getElementById(
-      'total'
-    )
-    .textContent =
-      result.total;
-  document
-    .getElementById(
-      'totalArea'
-    )
-    .style.display =
-      'block';
+
 }
 /* =================================================
    JAN読み取り成功
