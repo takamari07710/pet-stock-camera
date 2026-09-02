@@ -2,8 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ペットシーツ在庫</title>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
@@ -197,10 +196,9 @@
     }
 
     /* =================================================
-       スマホ
+       スマホ調整
     ================================================= */
     @media (max-width: 430px) {
-
       body {
         padding: 10px;
       }
@@ -240,833 +238,197 @@
 
 <h1>🐾 ペットシーツ在庫</h1>
 
-<!-- =================================================
-     入庫・使用
-================================================= -->
+<!-- 入庫・使用選択 -->
 <div class="mode">
-
-  <button
-    id="inButton"
-    class="active"
-    onclick="setMode('in')">
+  <button id="inButton" class="active" onclick="setMode('in')">
     ＋ 入庫
   </button>
-
-  <button
-    id="outButton"
-    onclick="setMode('out')">
+  <button id="outButton" onclick="setMode('out')">
     − 使用
   </button>
-
 </div>
 
-<!-- =================================================
-     カメラ
-================================================= -->
+<!-- カメラエリア -->
 <div id="cameraArea">
-
   <div id="reader"></div>
-
   <div id="successOverlay">
-
-    <div class="icon">
-      ✓
-    </div>
-
-    <div class="title">
-      読み取り成功
-    </div>
-
-    <div
-      class="code"
-      id="successCode">
-    </div>
-
+    <div class="icon">✓</div>
+    <div class="title">読み取り成功</div>
+    <div class="code" id="successCode"></div>
   </div>
-
 </div>
 
-<!-- =================================================
-     商品情報
-================================================= -->
+<!-- 結果表示エリア -->
 <div class="result">
+  <div id="productName">バーコードを読み取ってください</div>
+  <div id="message">カメラを準備しています…</div>
 
-  <div id="productName">
-    バーコードを読み取ってください
-  </div>
-
-  <!-- メッセージ -->
-  <div id="message">
-    カメラを準備しています…
-  </div>
-
-  <!-- 端数入力 -->
-  <button
-    id="remainderPageButton"
-    type="button"
-    onclick="location.href='remainder.html'">
+  <button id="remainderPageButton" type="button" onclick="location.href='remainder.html'">
     ✏️ 端数を入力する
   </button>
 
   <div id="warning"></div>
-
 </div>
 
-<!-- =================================================
-     在庫一覧
-================================================= -->
-<button
-  id="stockListButton"
-  type="button"
-  onclick="location.href='stock.html'">
+<!-- 在庫一覧ボタン -->
+<button id="stockListButton" type="button" onclick="location.href='stock.html'">
   📦 在庫一覧を見る
 </button>
 
 
 <script>
-
 /* =================================================
    GAS URL
 ================================================= */
-
 const GAS_URL =
   'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPr4A/exec';
 
-
 /* =================================================
-   変数
+   状態管理変数
 ================================================= */
-
 let scanner = null;
-
-/*
- * 現在のモード
- *
- * in  = 入庫
- * out = 使用
- */
-let mode = 'in';
-
-
-/*
- * GAS通信中かどうか
- *
- * true  = 次の読み取りを受け付けない
- * false = 次の読み取りを受け付ける
- */
-let processing = false;
-
-
-/*
- * 最後に成功したJAN
- */
+let mode = 'in'; // 'in' または 'out'
+let processing = false; // 二重読み取り防止フラグ
 let lastCode = '';
-
-/*
- * 最後に成功した時間
- *
- * 「読み取り開始時」ではなく
- * 「スプレッドシート書き込み成功時」に
- * 更新するのがポイント
- */
 let lastScanTime = 0;
 
-
 /* =================================================
-   入庫・使用モード
+   モード切り替え
 ================================================= */
-
 function setMode(newMode) {
-
   mode = newMode;
 
-  document
-    .getElementById('inButton')
-    .classList
-    .toggle(
-      'active',
-      mode === 'in'
-    );
+  document.getElementById('inButton').classList.toggle('active', mode === 'in');
+  document.getElementById('outButton').classList.toggle('active', mode === 'out');
 
-  document
-    .getElementById('outButton')
-    .classList
-    .toggle(
-      'active',
-      mode === 'out'
-    );
-
-  showMessage(
-    mode === 'in'
-      ? '＋ 入庫モード'
-      : '− 使用モード'
-  );
+  showMessage(mode === 'in' ? '＋ 入庫モードに切り替えました' : '− 使用モードに切り替えました');
 }
 
-
 /* =================================================
-   メッセージ
+   メッセージ表示
 ================================================= */
-
-function showMessage(
-  text,
-  error = false
-) {
-
-  const message =
-    document.getElementById(
-      'message'
-    );
-
-  message.textContent =
-    text;
-
-  message.className =
-    error
-      ? 'error'
-      : '';
+function showMessage(text, isError = false) {
+  const msgEl = document.getElementById('message');
+  msgEl.textContent = text;
+  msgEl.className = isError ? 'error' : '';
 }
 
-
 /* =================================================
-   読み取り成功表示
+   オーバーレイ表示制御
 ================================================= */
-
 function showSuccessOverlay(code) {
-
-  const overlay =
-    document.getElementById(
-      'successOverlay'
-    );
-
-  const codeElement =
-    document.getElementById(
-      'successCode'
-    );
-
-  codeElement.textContent =
-    code;
-
-  overlay.style.display =
-    'flex';
+  document.getElementById('successCode').textContent = code;
+  document.getElementById('successOverlay').style.display = 'flex';
 }
-
-
-/* =================================================
-   緑色表示を消す
-================================================= */
 
 function hideSuccessOverlay() {
-
-  const overlay =
-    document.getElementById(
-      'successOverlay'
-    );
-
-  overlay.style.display =
-    'none';
+  document.getElementById('successOverlay').style.display = 'none';
 }
 
-
 /* =================================================
-   GAS通信
+   GAS通信 (JSONP)
 ================================================= */
+function sendToGAS(action, jan) {
+  return new Promise((resolve, reject) => {
+    const callbackName = 'gasCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+    const script = document.createElement('script');
+    let finished = false;
 
-function sendToGAS(
-  action,
-  jan,
-  extraParams = {}
-) {
+    window[callbackName] = function(result) {
+      if (finished) return;
+      finished = true;
+      delete window[callbackName];
+      script.remove();
+      resolve(result);
+    };
 
-  return new Promise(
-    function(resolve, reject) {
+    script.onerror = function() {
+      if (finished) return;
+      finished = true;
+      delete window[callbackName];
+      script.remove();
+      reject(new Error('GASとの通信に失敗しました'));
+    };
 
-      const callbackName =
-        'gasCallback_' +
-        Date.now() +
-        '_' +
-        Math.floor(
-          Math.random() * 100000
-        );
+    let url = GAS_URL +
+      '?action=' + encodeURIComponent(action) +
+      '&code=' + encodeURIComponent(jan) +
+      '&mode=' + encodeURIComponent(mode) +
+      '&callback=' + encodeURIComponent(callbackName);
 
-
-      const script =
-        document.createElement(
-          'script'
-        );
-
-
-      let finished = false;
-
-
-      /* =================================================
-         GAS返答
-      ================================================= */
-
-      window[callbackName] =
-        function(result) {
-
-          if (finished) {
-            return;
-          }
-
-          finished = true;
-
-          console.log(
-            'GAS返答:',
-            result
-          );
-
-          delete window[
-            callbackName
-          ];
-
-          script.remove();
-
-          resolve(result);
-        };
-
-
-      /* =================================================
-         通信エラー
-      ================================================= */
-
-      script.onerror =
-        function() {
-
-          if (finished) {
-            return;
-          }
-
-          finished = true;
-
-          delete window[
-            callbackName
-          ];
-
-          script.remove();
-
-          reject(
-            new Error(
-              'GASとの通信に失敗しました'
-            )
-          );
-        };
-
-
-      /* =================================================
-         URL作成
-      ================================================= */
-
-      let url =
-        GAS_URL +
-        '?action=' +
-        encodeURIComponent(
-          action
-        ) +
-        '&code=' +
-        encodeURIComponent(
-          jan
-        ) +
-        '&callback=' +
-        encodeURIComponent(
-          callbackName
-        );
-
-
-      /* =================================================
-         追加パラメータ
-      ================================================= */
-
-      for (
-        const key in extraParams
-      ) {
-
-        url +=
-          '&' +
-          encodeURIComponent(
-            key
-          ) +
-          '=' +
-          encodeURIComponent(
-            extraParams[key]
-          );
-      }
-
-
-      console.log(
-        'GAS送信:',
-        url
-      );
-
-
-      script.src =
-        url;
-
-
-      document
-        .body
-        .appendChild(
-          script
-        );
-
-    }
-  );
+    script.src = url;
+    document.body.appendChild(script);
+  });
 }
 
-
 /* =================================================
-   商品情報表示
+   バーコード読み取り時処理
 ================================================= */
+async function onScanSuccess(decodedText) {
+  const now = Date.now();
+  const cleanCode = String(decodedText).trim();
 
-function displayProduct(result) {
-
-  document
-    .getElementById(
-      'productName'
-    )
-    .textContent =
-      result.name ||
-      result.productName ||
-      '-';
-}
-
-
-/* =================================================
-   JAN読み取り成功
-================================================= */
-
-async function onScanSuccess(
-  decodedText
-) {
-
-  const now =
-    Date.now();
-
-
-  /* =================================================
-     通信中なら無視
-     
-     ↓
-     GASへの書き込みが完了するまで
-     次のバーコードは受け付けない
-  ================================================= */
-
-  if (processing) {
+  // 通信中、または同じバーコードを2秒以内に連続読み取りした場合は無視
+  if (processing || (cleanCode === lastCode && (now - lastScanTime) < 2000)) {
     return;
   }
-
-
-  /* =================================================
-     同じバーコードの連続読み取り防止
-     
-     ※前回は「読み取り開始時」だったが、
-       今回は「書き込み成功時」から2秒
-  ================================================= */
-
-  if (
-    decodedText === lastCode &&
-    now - lastScanTime < 2000
-  ) {
-
-    return;
-  }
-
-
-  /* =================================================
-     通信処理開始
-  ================================================= */
 
   processing = true;
-
-
-  /* =================================================
-     緑色表示
-  ================================================= */
-
-  showSuccessOverlay(
-    decodedText
-  );
-
-
-  /* =================================================
-     処理中表示
-  ================================================= */
-
-  showMessage(
-    mode === 'in'
-      ? '📦 スプレッドシートに入庫を書き込んでいます…'
-      : '📤 スプレッドシートに使用を書き込んでいます…'
-  );
-
+  showSuccessOverlay(cleanCode);
+  showMessage(mode === 'in' ? 'スプレッドシートに入庫を書き込んでいます…' : 'スプレッドシートに使用を書き込んでいます…');
 
   try {
+    const res = await sendToGAS('updateStock', cleanCode);
 
-    /* =================================================
-       GASへ在庫更新
-       
-       in  → ＋1パック
-       out → −1パック
-    ================================================= */
-
-    const result =
-      await sendToGAS(
-        'updateStock',
-        decodedText,
-        {
-          mode: mode
-        }
-      );
-
-
-    console.log(
-      '在庫更新結果:',
-      result
-    );
-
-
-    /* =================================================
-       GAS側でエラー
-    ================================================= */
-
-    if (
-      !result ||
-      !result.success
-    ) {
-
+    if (res.success) {
+      document.getElementById('productName').textContent = res.name || '商品名不明';
+      showMessage(`【${mode === 'in' ? '入庫完了' : '使用完了'}】現在のパック数: ${res.packCount} (合計: ${res.total})`);
+      lastCode = cleanCode;
+      lastScanTime = Date.now();
+    } else {
+      document.getElementById('productName').textContent = res.name || '読み取りエラー';
+      showMessage(res.message || '処理に失敗しました', true);
+    }
+  } catch (err) {
+    showMessage(err.message || '通信エラーが発生しました', true);
+  } finally {
+    setTimeout(() => {
       hideSuccessOverlay();
-
-      document
-        .getElementById(
-          'warning'
-        )
-        .textContent =
-          result &&
-          result.message
-            ? result.message
-            : '在庫の更新に失敗しました';
-
-      showMessage(
-        result &&
-        result.message
-          ? result.message
-          : '在庫の更新に失敗しました。',
-        true
-      );
-
-      return;
-    }
-
-
-    /* =================================================
-       ★ここが重要
-       
-       スプレッドシートへの書き込み成功
-       
-       この時点で次のバーコードを
-       読み取れる状態にする
-    ================================================= */
-
-    processing = false;
-
-
-    /* =================================================
-       成功したJANと時間を保存
-       
-       この時点から2秒間だけ
-       同じJANを無視する
-    ================================================= */
-
-    lastCode =
-      decodedText;
-
-    lastScanTime =
-      Date.now();
-
-
-    /* =================================================
-       警告を消す
-    ================================================= */
-
-    document
-      .getElementById(
-        'warning'
-      )
-      .textContent =
-        '';
-
-
-    /* =================================================
-       商品名表示
-    ================================================= */
-
-    displayProduct(
-      result
-    );
-
-
-    /* =================================================
-       緑色表示をすぐ消す
-       
-       2秒待たない
-    ================================================= */
-
-    hideSuccessOverlay();
-
-
-    /* =================================================
-       次のバーコードをすぐ読めることを表示
-    ================================================= */
-
-    if (mode === 'in') {
-
-      showMessage(
-        '✓ 入庫しました。次のバーコードを読み取れます'
-      );
-
-    }
-    else {
-
-      showMessage(
-        '✓ 使用しました。次のバーコードを読み取れます'
-      );
-
-    }
-
+      processing = false;
+    }, 1200);
   }
-  catch (error) {
-
-    console.error(
-      error
-    );
-
-
-    hideSuccessOverlay();
-
-
-    showMessage(
-      error.message ||
-      '通信エラーが発生しました。',
-      true
-    );
-
-  }
-  finally {
-
-    /*
-     * 成功時は上ですでにfalse。
-     *
-     * エラー時はこちらでfalseにして
-     * 再度読み取れるようにする。
-     */
-
-    processing = false;
-
-  }
-
 }
 
-
 /* =================================================
-   カメラ起動
+   カメラの初期化と起動
 ================================================= */
+function startCamera() {
+  scanner = new Html5Qrcode("reader");
 
-async function startScanner() {
+  const config = {
+    fps: 10,
+    qrbox: { width: 250, height: 150 },
+    formatsToSupport: [
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.EAN_8
+    ]
+  };
 
-  try {
-
-    showMessage(
-      'カメラを起動しています…'
-    );
-
-
-    scanner =
-      new Html5Qrcode(
-        'reader'
-      );
-
-
-    /* =================================================
-       カメラ一覧
-    ================================================= */
-
-    const cameras =
-      await Html5Qrcode
-        .getCameras();
-
-
-    if (
-      !cameras ||
-      cameras.length === 0
-    ) {
-
-      throw new Error(
-        'カメラが見つかりません'
-      );
-
-    }
-
-
-    /* =================================================
-       最初のカメラ
-    ================================================= */
-
-    let cameraId =
-      cameras[0].id;
-
-
-    /* =================================================
-       背面カメラ優先
-    ================================================= */
-
-    for (
-      const camera
-      of cameras
-    ) {
-
-      const label =
-        (
-          camera.label ||
-          ''
-        ).toLowerCase();
-
-
-      if (
-        label.includes('back') ||
-        label.includes('rear') ||
-        label.includes('environment') ||
-        label.includes('背面')
-      ) {
-
-        cameraId =
-          camera.id;
-
-        break;
-
-      }
-
-    }
-
-
-    /* =================================================
-       カメラ開始
-    ================================================= */
-
-    await scanner.start(
-
-      cameraId,
-
-      {
-
-        fps: 10,
-
-        qrbox:
-          function(
-            viewfinderWidth,
-            viewfinderHeight
-          ) {
-
-            const width =
-              Math.min(
-                300,
-                Math.max(
-                  200,
-                  viewfinderWidth - 100
-                )
-              );
-
-
-            const height =
-              Math.min(
-                100,
-                Math.max(
-                  80,
-                  viewfinderHeight - 100
-                )
-              );
-
-
-            return {
-
-              width:
-                width,
-
-              height:
-                height
-
-            };
-
-          },
-
-        formatsToSupport: [
-
-          Html5QrcodeSupportedFormats
-            .EAN_13,
-
-          Html5QrcodeSupportedFormats
-            .EAN_8,
-
-          Html5QrcodeSupportedFormats
-            .UPC_A
-
-        ]
-
-      },
-
-      /* =================================================
-         読み取り成功
-      ================================================= */
-
-      onScanSuccess,
-
-
-      /* =================================================
-         読み取り失敗
-      ================================================= */
-
-      function() {
-        // 無視
-      }
-
-    );
-
-
-    showMessage(
-      '📷 バーコードを映してください'
-    );
-
-  }
-  catch (error) {
-
-    console.error(
-      error
-    );
-
-    showMessage(
-      'カメラを起動できません：' +
-      error.message,
-      true
-    );
-
-  }
-
+  scanner.start(
+    { facingMode: "environment" },
+    config,
+    onScanSuccess
+  ).then(() => {
+    showMessage('カメラ準備完了。バーコードを枠内にかざしてください。');
+  }).catch((err) => {
+    showMessage('カメラの起動に失敗しました。アクセス権限を確認してください。', true);
+    console.error(err);
+  });
 }
 
-
-/* =================================================
-   ページ読み込み
-================================================= */
-
-window.addEventListener(
-  'load',
-  function() {
-
-    startScanner();
-
-  }
-);
+// ページ読み込み時にカメラ起動
+window.addEventListener('DOMContentLoaded', startCamera);
 
 </script>
-
 </body>
 </html>
