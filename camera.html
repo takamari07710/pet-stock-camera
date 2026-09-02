@@ -64,18 +64,14 @@
 
     /* =================================================
        カメラ
-       
-       通常時
-       400px × 200px
-       
-       スマホ
-       画面幅に合わせて縮小
     ================================================= */
 
     #cameraArea {
+
       position: relative;
 
       width: 400px;
+
       height: 200px;
 
       max-width: 100%;
@@ -83,12 +79,15 @@
       margin: auto;
 
       box-sizing: border-box;
+
     }
 
 
     #reader {
+
       width: 100%;
-      height: 100%;
+
+      height: 200px;
 
       background: white;
 
@@ -97,35 +96,20 @@
       overflow: hidden;
 
       box-sizing: border-box;
+
     }
 
 
-    /*
-     * html5-qrcodeが作るカメラ映像
-     *
-     * スマホでもカメラエリアから
-     * はみ出さないようにする
-     */
-
     #reader video {
+
       width: 100% !important;
+
       height: 200px !important;
 
       object-fit: cover;
 
       display: block;
-    }
 
-
-    /*
-     * html5-qrcode内部の読み取り範囲
-     *
-     * 必要に応じてライブラリ側の
-     * サイズ指定を邪魔しないようにする
-     */
-
-    #reader > div {
-      max-width: 100%;
     }
 
 
@@ -140,8 +124,11 @@
       position: absolute;
 
       top: 0;
+
       left: 0;
+
       right: 0;
+
       bottom: 0;
 
       z-index: 9999;
@@ -259,68 +246,16 @@
 
 
     /* =================================================
-       端数入力
+       端数入力ページへのボタン
     ================================================= */
 
-    .remainderArea {
-
-      margin-top: 18px;
-
-      padding: 15px;
-
-      background: #f1f8ff;
-
-      border-radius: 10px;
-
-    }
-
-
-    .remainderTitle {
-
-      font-size: 18px;
-
-      font-weight: bold;
-
-      margin-bottom: 10px;
-
-    }
-
-
-    #remainderInput {
-
-      width: 120px;
-
-      padding: 12px;
-
-      font-size: 24px;
-
-      text-align: center;
-
-      border: 2px solid #2196f3;
-
-      border-radius: 8px;
-
-      box-sizing: border-box;
-
-    }
-
-
-    .remainderUnit {
-
-      font-size: 18px;
-
-      margin-left: 5px;
-
-    }
-
-
-    #confirmButton {
+    #remainderPageButton {
 
       display: block;
 
       width: 100%;
 
-      margin-top: 15px;
+      margin-top: 18px;
 
       padding: 15px;
 
@@ -332,22 +267,11 @@
 
       border-radius: 10px;
 
-      background: #4caf50;
+      background: #ff9800;
 
       color: white;
 
       cursor: pointer;
-
-    }
-
-
-    #confirmButton:disabled {
-
-      background: #aaa;
-
-      color: #eee;
-
-      cursor: not-allowed;
 
     }
 
@@ -435,6 +359,37 @@
 
 
     /* =================================================
+       在庫一覧ボタン
+    ================================================= */
+
+    #stockListButton {
+
+      width: 100%;
+
+      max-width: 500px;
+
+      margin: 20px auto 10px;
+
+      padding: 15px;
+
+      font-size: 20px;
+
+      font-weight: bold;
+
+      border: none;
+
+      border-radius: 10px;
+
+      background: #607d8b;
+
+      color: white;
+
+      cursor: pointer;
+
+    }
+
+
+    /* =================================================
        スマホ
     ================================================= */
 
@@ -481,17 +436,6 @@
 
       }
 
-
-      /*
-       * カメラは画面幅に合わせる
-       *
-       * 例：
-       * 390pxのスマホ
-       * → カメラ 390px × 200px
-       *
-       * 360pxのスマホ
-       * → カメラ 360px × 200px
-       */
 
       #cameraArea {
 
@@ -647,50 +591,6 @@
 
 
   <!-- =================================================
-       端数入力
-  ================================================= -->
-
-  <div
-    class="remainderArea"
-    id="remainderArea"
-    style="display:none;">
-
-    <div class="remainderTitle">
-
-      端数を入力してください
-
-    </div>
-
-
-    <input
-      type="number"
-      id="remainderInput"
-      min="0"
-      step="1"
-      inputmode="numeric"
-      autocomplete="off">
-
-
-    <span class="remainderUnit">
-
-      個
-
-    </span>
-
-
-    <button
-      id="confirmButton"
-      type="button"
-      onclick="confirmRemainder()">
-
-      確定
-
-    </button>
-
-  </div>
-
-
-  <!-- =================================================
        合計
   ================================================= -->
 
@@ -722,6 +622,20 @@
   </div>
 
 
+  <!-- =================================================
+       端数入力ページ
+  ================================================= -->
+
+  <button
+    id="remainderPageButton"
+    type="button"
+    onclick="location.href='remainder.html'">
+
+    ✏️ 端数を入力する
+
+  </button>
+
+
   <div id="warning"></div>
 
 </div>
@@ -736,6 +650,20 @@
   カメラを準備しています…
 
 </div>
+
+
+<!-- =================================================
+     在庫一覧
+================================================= -->
+
+<button
+  id="stockListButton"
+  type="button"
+  onclick="location.href='stock.html'">
+
+  📦 在庫一覧を見る
+
+</button>
 
 
 <script>
@@ -756,11 +684,6 @@ const GAS_URL =
 let scanner = null;
 
 let mode = 'in';
-
-
-/*
- * 現在GASとの通信処理中か
- */
 
 let processing = false;
 
@@ -791,23 +714,6 @@ let currentJAN = '';
  */
 
 let currentProduct = null;
-
-
-/*
- * =================================================
- * 確定待ち状態
- *
- * true
- * → 商品を読み取り済み
- * → まだ「確定」していない
- * → 次のバーコードを読まない
- *
- * false
- * → 次のバーコードを読める
- * =================================================
- */
-
-let waitingForConfirmation = false;
 
 
 /* =================================================
@@ -863,7 +769,8 @@ function showMessage(
     );
 
 
-  message.textContent = text;
+  message.textContent =
+    text;
 
 
   message.className =
@@ -1066,7 +973,8 @@ function sendToGAS(
       );
 
 
-      script.src = url;
+      script.src =
+        url;
 
 
       document
@@ -1117,26 +1025,10 @@ function displayProduct(result) {
 
   document
     .getElementById(
-      'remainderInput'
-    )
-    .value =
-      result.remainder;
-
-
-  document
-    .getElementById(
       'total'
     )
     .textContent =
       result.total;
-
-
-  document
-    .getElementById(
-      'remainderArea'
-    )
-    .style.display =
-      'block';
 
 
   document
@@ -1145,435 +1037,6 @@ function displayProduct(result) {
     )
     .style.display =
       'block';
-
-
-  updateTotal();
-
-
-  /*
-   * 確定待ち
-   */
-
-  waitingForConfirmation =
-    true;
-
-
-  /*
-   * 確定ボタンを有効化
-   */
-
-  document
-    .getElementById(
-      'confirmButton'
-    )
-    .disabled =
-      false;
-
-
-  /*
-   * 端数入力欄へカーソル
-   */
-
-  document
-    .getElementById(
-      'remainderInput'
-    )
-    .focus();
-
-}
-
-
-/* =================================================
-   合計計算
-================================================= */
-
-function updateTotal() {
-
-  if (!currentProduct) {
-
-    return;
-
-  }
-
-
-  const remainder =
-    Number(
-      document
-        .getElementById(
-          'remainderInput'
-        )
-        .value
-    ) || 0;
-
-
-  const total =
-    Number(
-      currentProduct.packCount
-    ) *
-    Number(
-      currentProduct.perPack
-    ) +
-    remainder;
-
-
-  document
-    .getElementById(
-      'total'
-    )
-    .textContent =
-      total;
-
-}
-
-
-/* =================================================
-   端数入力変更時
-================================================= */
-
-document
-  .getElementById(
-    'remainderInput'
-  )
-  .addEventListener(
-    'input',
-    updateTotal
-  );
-
-
-/* =================================================
-   端数確定
-================================================= */
-
-async function confirmRemainder() {
-
-
-  /*
-   * 商品がなければ確定できない
-   */
-
-  if (!currentProduct) {
-
-    showMessage(
-      '先にバーコードを読み取ってください。',
-      true
-    );
-
-    return;
-
-  }
-
-
-  /*
-   * 保存処理中なら何もしない
-   */
-
-  if (processing) {
-
-    return;
-
-  }
-
-
-  /*
-   * 確定待ちでなければ何もしない
-   */
-
-  if (!waitingForConfirmation) {
-
-    return;
-
-  }
-
-
-  const input =
-    document.getElementById(
-      'remainderInput'
-    );
-
-
-  const remainder =
-    Number(
-      input.value
-    );
-
-
-  /*
-   * 入力チェック
-   */
-
-  if (
-    !Number.isInteger(
-      remainder
-    )
-  ) {
-
-    showMessage(
-      '端数は整数で入力してください。',
-      true
-    );
-
-    input.focus();
-
-    return;
-
-  }
-
-
-  /*
-   * 0未満は禁止
-   */
-
-  if (
-    remainder < 0
-  ) {
-
-    showMessage(
-      '端数は0以上で入力してください。',
-      true
-    );
-
-    input.focus();
-
-    return;
-
-  }
-
-
-  const button =
-    document.getElementById(
-      'confirmButton'
-    );
-
-
-  /*
-   * 保存開始
-   */
-
-  processing =
-    true;
-
-
-  /*
-   * ボタン無効化
-   */
-
-  button.disabled =
-    true;
-
-
-  showMessage(
-    '端数を保存しています…'
-  );
-
-
-  try {
-
-
-    /*
-     * GASへ保存
-     */
-
-    const result =
-      await sendToGAS(
-        'setRemainder',
-        currentJAN,
-        {
-          remainder:
-            remainder
-        }
-      );
-
-
-    console.log(
-      '端数保存結果:',
-      result
-    );
-
-
-    /*
-     * GAS側エラー
-     */
-
-    if (
-      !result.success
-    ) {
-
-      /*
-       * 確定できていないので
-       * バーコード読み取り禁止を維持
-       */
-
-      waitingForConfirmation =
-        true;
-
-
-      processing =
-        false;
-
-
-      button.disabled =
-        false;
-
-
-      showMessage(
-        result.message ||
-        '保存できませんでした。',
-        true
-      );
-
-
-      return;
-
-    }
-
-
-    /*
-     * =================================================
-     * 保存成功
-     * =================================================
-     */
-
-
-    /*
-     * 最新情報を表示
-     */
-
-    document
-      .getElementById(
-        'productName'
-      )
-      .textContent =
-      result.name;
-
-
-    document
-      .getElementById(
-        'packCount'
-      )
-      .textContent =
-      result.packCount;
-
-
-    document
-      .getElementById(
-        'perPack'
-      )
-      .textContent =
-      result.perPack;
-
-
-    document
-      .getElementById(
-        'remainderInput'
-      )
-      .value =
-      result.remainder;
-
-
-    document
-      .getElementById(
-        'total'
-      )
-      .textContent =
-      result.total;
-
-
-    /*
-     * 商品情報更新
-     */
-
-    currentProduct =
-      result;
-
-
-    /*
-     * =================================================
-     * ★★★★★
-     *
-     * 確定成功したので
-     * ここで緑色を消す
-     * =================================================
-     */
-
-    hideSuccessOverlay();
-
-
-    /*
-     * =================================================
-     * 確定完了
-     *
-     * 次のバーコードを読めるようにする
-     * =================================================
-     */
-
-    waitingForConfirmation =
-      false;
-
-
-    processing =
-      false;
-
-
-    /*
-     * 確定ボタンは無効化
-     */
-
-    button.disabled =
-      true;
-
-
-    /*
-     * 同じJANでも次回読み取り可能
-     */
-
-    lastCode =
-      '';
-
-
-    lastScanTime =
-      0;
-
-
-    showMessage(
-      '✓ 入力完了。次のバーコードを読み取ってください'
-    );
-
-
-  }
-  catch (error) {
-
-
-    console.error(
-      error
-    );
-
-
-    /*
-     * 通信エラー
-     *
-     * 確定できているか不明なので
-     * 緑表示を残す
-     */
-
-    processing =
-      false;
-
-
-    waitingForConfirmation =
-      true;
-
-
-    button.disabled =
-      false;
-
-
-    showMessage(
-      error.message ||
-      '通信エラーが発生しました。',
-      true
-    );
-
-  }
 
 }
 
@@ -1592,38 +1055,9 @@ async function onScanSuccess(
 
   /*
    * =================================================
-   * 確定待ちなら
-   * 次のバーコードを完全に無視
+   * 同じバーコードを
+   * 2秒以内には読まない
    * =================================================
-   */
-
-  if (
-    waitingForConfirmation
-  ) {
-
-    console.log(
-      '確定待ちのため読み取りを無視:',
-      decodedText
-    );
-
-    return;
-
-  }
-
-
-  /*
-   * GAS通信中なら無視
-   */
-
-  if (processing) {
-
-    return;
-
-  }
-
-
-  /*
-   * 同じJANの連続読み取り防止
    */
 
   if (
@@ -1637,7 +1071,18 @@ async function onScanSuccess(
 
 
   /*
-   * 最終読み取り情報
+   * 通信処理中なら無視
+   */
+
+  if (processing) {
+
+    return;
+
+  }
+
+
+  /*
+   * 最後に読み取ったJANと時間
    */
 
   lastCode =
@@ -1649,7 +1094,7 @@ async function onScanSuccess(
 
 
   /*
-   * 商品検索開始
+   * 通信開始
    */
 
   processing =
@@ -1667,38 +1112,7 @@ async function onScanSuccess(
 
 
   /*
-   * 確定ボタン無効化
-   */
-
-  document
-    .getElementById(
-      'confirmButton'
-    )
-    .disabled =
-      true;
-
-
-  /*
-   * =================================================
-   * 商品情報取得中も
-   * 次のバーコードを読まない
-   * =================================================
-   */
-
-  waitingForConfirmation =
-    true;
-
-
-  /*
-   * 前の商品情報をクリア
-   */
-
-  currentProduct =
-    null;
-
-
-  /*
-   * 読み取り成功表示
+   * 緑色表示
    */
 
   showSuccessOverlay(
@@ -1715,9 +1129,7 @@ async function onScanSuccess(
 
 
     /*
-     * =================================================
      * 商品検索
-     * =================================================
      */
 
     const result =
@@ -1734,20 +1146,12 @@ async function onScanSuccess(
 
 
     /*
-     * =================================================
      * 商品がない
-     * =================================================
      */
 
     if (
       !result.success
     ) {
-
-
-      /*
-       * 商品がない場合は
-       * 緑表示を消す
-       */
 
       hideSuccessOverlay();
 
@@ -1768,23 +1172,13 @@ async function onScanSuccess(
       );
 
 
-      /*
-       * 次のバーコードを読めるようにする
-       */
-
-      waitingForConfirmation =
-        false;
-
-
       return;
 
     }
 
 
     /*
-     * =================================================
      * 商品情報表示
-     * =================================================
      */
 
     displayProduct(
@@ -1792,17 +1186,27 @@ async function onScanSuccess(
     );
 
 
+    showMessage(
+      '📷 次のバーコードを読み取れます'
+    );
+
+
     /*
-     * ここでは
-     * waitingForConfirmationをfalseにしない
+     * =================================================
+     * 緑色表示は2秒後に消す
      *
-     * 「確定」を押すまで
-     * 次のバーコードを読まない
+     * 2秒後から次のバーコードを
+     * 読み取れるようにする
+     * =================================================
      */
 
+    setTimeout(
+      function() {
 
-    showMessage(
-      '端数を入力して「確定」を押してください'
+        hideSuccessOverlay();
+
+      },
+      2000
     );
 
   }
@@ -1814,15 +1218,7 @@ async function onScanSuccess(
     );
 
 
-    /*
-     * 通信エラー
-     */
-
     hideSuccessOverlay();
-
-
-    waitingForConfirmation =
-      false;
 
 
     showMessage(
@@ -1933,10 +1329,10 @@ async function startScanner() {
      * =================================================
      * カメラ開始
      *
-     * カメラエリア
+     * カメラ
      * 400 × 200
      *
-     * バーコード読み取り範囲
+     * 読み取り範囲
      * 300 × 100
      *
      * スマホでは自動縮小
@@ -1953,69 +1349,50 @@ async function startScanner() {
 
 
         /*
-         * 読み取り範囲
+         * カメラ400×200に対して
          *
-         * 通常：
-         * 300 × 100
+         * 上下左右50px
          *
-         * カメラ：
-         * 400 × 200
+         * → 300×100
          *
-         * → 上下左右50px
-         *
-         * スマホ：
-         * 画面幅に合わせて自動縮小
+         * スマホでは自動縮小
          */
 
-        qrbox: function(
-          viewfinderWidth,
-          viewfinderHeight
-        ) {
+        qrbox:
+          function(
+            viewfinderWidth,
+            viewfinderHeight
+          ) {
 
-          /*
-           * 横幅
-           *
-           * 最大300px
-           *
-           * 画面が400px未満なら
-           * 画面幅 - 100px
-           */
-
-          const width =
-            Math.min(
-              300,
-              Math.max(
-                200,
-                viewfinderWidth - 100
-              )
-            );
+            const width =
+              Math.min(
+                300,
+                Math.max(
+                  200,
+                  viewfinderWidth - 100
+                )
+              );
 
 
-          /*
-           * 高さ
-           *
-           * 最大100px
-           *
-           * カメラ高さ200pxに対して
-           * 上下50px
-           */
-
-          const height =
-            Math.min(
-              100,
-              Math.max(
-                80,
-                viewfinderHeight - 100
-              )
-            );
+            const height =
+              Math.min(
+                100,
+                Math.max(
+                  80,
+                  viewfinderHeight - 100
+                )
+              );
 
 
-          return {
-            width: width,
-            height: height
-          };
+            return {
+              width:
+                width,
 
-        },
+              height:
+                height
+            };
+
+          },
 
 
         formatsToSupport: [
@@ -2092,39 +1469,6 @@ window.addEventListener(
 );
 
 </script>
-
-
-<!-- =================================================
-     在庫一覧ボタン
-================================================= -->
-
-<div style="
-  width:100%;
-  max-width:500px;
-  margin:20px auto 10px;
-">
-
-  <button
-    type="button"
-    onclick="location.href='stock.html'"
-    style="
-      width:100%;
-      padding:15px;
-      font-size:20px;
-      font-weight:bold;
-      border:none;
-      border-radius:10px;
-      background:#607d8b;
-      color:white;
-      cursor:pointer;
-    "
-  >
-
-    📦 在庫一覧を見る
-
-  </button>
-
-</div>
 
 
 </body>
