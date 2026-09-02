@@ -138,23 +138,26 @@
     }
 
 .stockRow {
-  display: flex;
-  justify-content: center;
+  display: grid;
+
+  grid-template-columns: 1fr 80px 60px;
+
   align-items: center;
 
-  gap: 15px;
-
-  padding: 8px 0;
+  padding: 10px 5px;
 
   font-size: 18px;
 
   border-bottom: 1px solid #ddd;
 }
 
+.stockRow > span {
+  text-align: center;
+}
+
 .stockValue {
   font-size: 24px;
   font-weight: bold;
-  min-width: 50px;
   text-align: center;
 }
 
