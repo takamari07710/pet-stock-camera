@@ -724,8 +724,8 @@ async function confirmRemainder() {
    * ★ ここで確定ボタンをロック
    * ==========================================
    */
-  button.disabled =
-    true;
+  /*button.disabled =
+    true;*/
   waitingForNextScan =
     true;
   showMessage(
@@ -846,147 +846,117 @@ async function confirmRemainder() {
 /* =================================================
    JAN読み取り成功
 ================================================= */
-async function onScanSuccess(
-  decodedText
-) {
-  const now =
-    Date.now();
-  /*
-   * 処理中は無視
-   */
+async function onScanSuccess(decodedText) {
+
+  const now = Date.now();
+
+  // 処理中なら無視
   if (processing) {
     return;
   }
-  /*
-   * 同じJANの連続読み取り防止
-   */
+
+  // 同じJANの連続読み取り防止
   if (
     decodedText === lastCode &&
     now - lastScanTime < 2000
   ) {
     return;
   }
-  lastCode =
-    decodedText;
-  lastScanTime =
-    now;
-  processing =
-    true;
-  currentJAN =
-    decodedText;
-  console.log(
-    'JAN読み取り:',
-    decodedText
-  );
-  /*
-   * ==========================================
-   * 新しいバーコードを読み取った
-   * ==========================================
-   *
-   * ここで初めて
-   * 前回の緑色表示を消す
-   */
+
+  // -----------------------------
+  // 新しいバーコード
+  // -----------------------------
+  lastCode = decodedText;
+  lastScanTime = now;
+
+  processing = true;
+  currentJAN = decodedText;
+
+  console.log('JAN読み取り:', decodedText);
+
+  // 前回の成功表示を消す
   hideSuccessOverlay();
-  /*
-   * 新しい商品なので
-   * 一旦確定ボタンを無効化
-   */
-  document
-    .getElementById(
-      'confirmButton'
-    )
-    .disabled =
-      true;
-  waitingForNextScan =
-    true;
-  /*
-   * 新しい商品情報を取得するまで
-   * 以前の商品を使えないようにする
-   */
-  currentProduct =
-    null;
-  /*
-   * 新しい読み取り成功表示
-   */
-  showSuccessOverlay(
-    decodedText
-  );
+
+  // 確定ボタン無効化
+  document.getElementById(
+    'confirmButton'
+  ).disabled = true;
+
+  waitingForNextScan = true;
+
+  // 前の商品情報をクリア
+  currentProduct = null;
+
+  // 読み取り成功表示
+  showSuccessOverlay(decodedText);
+
   showMessage(
     '読み取り成功。商品情報を取得しています…'
   );
+
   try {
-    /*
-     * ======================================
-     * 商品検索
-     * ======================================
-     */
-    const result =
-      await sendToGAS(
-        'getProduct',
-        decodedText
-      );
+
+    // -----------------------------
+    // 商品検索
+    // -----------------------------
+    const result = await sendToGAS(
+      'getProduct',
+      decodedText
+    );
+
     console.log(
       '商品検索結果:',
       result
     );
-    /*
-     * 商品がない
-     */
+
+    // -----------------------------
+    // 商品が見つからない
+    // -----------------------------
     if (!result.success) {
-      document
-        .getElementById(
-          'productName'
-        )
-        .textContent =
+
+      document.getElementById(
+        'productName'
+      ).textContent =
         result.message ||
         '商品が見つかりません';
+
       showMessage(
         result.message ||
         '商品が見つかりません。',
         true
       );
-      /*
-       * 商品が見つからないので
-       * 確定ボタンは無効のまま
-       */
+
       return;
     }
-    /*
-     * 商品情報表示
-     *
-     * ここで確定ボタンが有効になる
-     */
-    displayProduct(
-      result
-    );
+
+    // -----------------------------
+    // 商品情報表示
+    // -----------------------------
+    displayProduct(result);
+    waitingForNextScan = false;
     showMessage(
       '端数を入力して「確定」を押してください'
     );
-  }
-  catch (error) {
-    console.error(
-      error
-    );
+
+  } catch (error) {
+
+    console.error(error);
+
     showMessage(
-      error.message,
+      error.message ||
+      '通信エラーが発生しました。',
       true
     );
-  }
-  finally {
-    /*
-     * 少し待ってから
-     * 次の読み取りを許可
-     */
-    setTimeout(
-      function() {
-        processing =
-          false;
-      },
-      500
-    );
+
+  } finally {
+
+    // 商品取得処理が終わったら
+    // すぐ次の読み取りを許可
+    processing = false;
+
   }
 }
-/* =================================================
+  /* =================================================
    カメラ起動
 ================================================= */
 async function startScanner() {
