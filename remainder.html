@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 
   <meta charset="UTF-8">
 
-<meta name="viewport"
-     content="width=device-width, initial-scale=1">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
 
   <title>端数入力</title>
+
 
   <style>
 
@@ -365,38 +365,40 @@
 
 </head>
 
+
 <body>
+
 
 <h1>✏️ 端数入力</h1>
 
+
 <div class="container">
+
 
   <!-- =================================================
        商品選択
   ================================================= -->
 
-<label
- class="label"
- for="productSelect">
+  <label
+    class="label"
+    for="productSelect">
 
-```
-商品名
-```
+    商品名
 
   </label>
 
-<select
- id="productSelect">
 
-```
-<option value="">
+  <select
+    id="productSelect">
 
-  商品を読み込んでいます…
+    <option value="">
 
-</option>
-```
+      商品を読み込んでいます…
+
+    </option>
 
   </select>
+
 
   <!-- =================================================
        商品情報
@@ -406,76 +408,76 @@
     id="productInfo"
     style="display:none;">
 
-```
-<div class="infoRow">
 
-  <span>
-    JAN
-  </span>
+    <div class="infoRow">
 
-  <span
-    class="infoValue"
-    id="jan">
+      <span>
+        JAN
+      </span>
 
-    -
+      <span
+        class="infoValue"
+        id="jan">
 
-  </span>
+        -
 
-</div>
+      </span>
 
-
-<div class="infoRow">
-
-  <span>
-    パック数
-  </span>
-
-  <span
-    class="infoValue"
-    id="packCount">
-
-    -
-
-  </span>
-
-</div>
+    </div>
 
 
-<div class="infoRow">
+    <div class="infoRow">
 
-  <span>
-    1パックあたり
-  </span>
+      <span>
+        パック数
+      </span>
 
-  <span
-    class="infoValue"
-    id="perPack">
+      <span
+        class="infoValue"
+        id="packCount">
 
-    -
+        -
 
-  </span>
+      </span>
 
-</div>
+    </div>
 
 
-<div class="infoRow">
+    <div class="infoRow">
 
-  <span>
-    現在の端数
-  </span>
+      <span>
+        1パックあたり
+      </span>
 
-  <span
-    class="infoValue"
-    id="currentRemainder">
+      <span
+        class="infoValue"
+        id="perPack">
 
-    -
+        -
 
-  </span>
+      </span>
 
-</div>
-```
+    </div>
+
+
+    <div class="infoRow">
+
+      <span>
+        現在の端数
+      </span>
+
+      <span
+        class="infoValue"
+        id="currentRemainder">
+
+        -
+
+      </span>
+
+    </div>
 
   </div>
+
 
   <!-- =================================================
        端数入力
@@ -486,67 +488,65 @@
     id="remainderArea"
     style="display:none;">
 
-```
-<div class="label">
+    <div class="label">
 
-  追加する端数
+      新しい端数
 
-</div>
-
-
-<input
-  type="number"
-  id="remainderInput"
-  min="0"
-  step="1"
-  inputmode="numeric"
-  autocomplete="off"
-  value="0">
+    </div>
 
 
-<span class="unit">
-
-  個
-
-</span>
-
-
-<!-- =================================================
-     合計プレビュー
-================================================= -->
-
-<div id="totalPreview">
-
-  変更後の合計
-
-  <div id="totalPreviewValue">
-
-    -
-
-  </div>
-
-  個
-
-</div>
+    <input
+      type="number"
+      id="remainderInput"
+      min="0"
+      step="1"
+      inputmode="numeric"
+      autocomplete="off">
 
 
-<!-- =================================================
-     確定
-================================================= -->
+    <span class="unit">
 
-<button
-  id="confirmButton"
-  type="button"
-  onclick="confirmRemainder()">
+      個
 
-  ✓ 端数を確定
+    </span>
 
-</button>
-```
+
+    <!-- =================================================
+         合計プレビュー
+    ================================================= -->
+
+    <div id="totalPreview">
+
+      変更後の合計
+
+      <div id="totalPreviewValue">
+
+        -
+
+      </div>
+
+      個
+
+    </div>
+
+
+    <!-- =================================================
+         確定
+    ================================================= -->
+
+    <button
+      id="confirmButton"
+      type="button"
+      onclick="confirmRemainder()">
+
+      ✓ 端数を確定
+
+    </button>
 
   </div>
 
 </div>
+
 
 <!-- =================================================
      メッセージ
@@ -554,22 +554,24 @@
 
 <div id="message">
 
-商品一覧を読み込んでいます…
+  商品一覧を読み込んでいます…
 
 </div>
+
 
 <!-- =================================================
      戻る
 ================================================= -->
 
 <button
-id="backButton"
-type="button"
-onclick="location.href='camera.html'">
+  id="backButton"
+  type="button"
+  onclick="location.href='camera.html'">
 
-📷 カメラに戻る
+  📷 カメラに戻る
 
 </button>
+
 
 <script>
 
@@ -579,7 +581,7 @@ onclick="location.href='camera.html'">
 ================================================= */
 
 const GAS_URL =
-  'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec?callback=test';
+  'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec';
 
 
 /* =================================================
@@ -651,9 +653,9 @@ function sendToGAS(
       let finished = false;
 
 
-      /* ---------------------------------------------
-         GAS返答
-      --------------------------------------------- */
+      /*
+       * GAS返答
+       */
 
       window[callbackName] =
         function(result) {
@@ -687,9 +689,9 @@ function sendToGAS(
         };
 
 
-      /* ---------------------------------------------
-         通信エラー
-      --------------------------------------------- */
+      /*
+       * 通信エラー
+       */
 
       script.onerror =
         function() {
@@ -721,9 +723,9 @@ function sendToGAS(
         };
 
 
-      /* ---------------------------------------------
-         URL作成
-      --------------------------------------------- */
+      /*
+       * URL
+       */
 
       let url =
         GAS_URL +
@@ -741,9 +743,9 @@ function sendToGAS(
         );
 
 
-      /* ---------------------------------------------
-         追加パラメータ
-      --------------------------------------------- */
+      /*
+       * 追加パラメータ
+       */
 
       for (
         const key in extraParams
@@ -832,17 +834,17 @@ async function loadProducts() {
       );
 
 
-    /* ---------------------------------------------
-       初期化
-    --------------------------------------------- */
+    /*
+     * 初期化
+     */
 
     select.innerHTML =
       '';
 
 
-    /* ---------------------------------------------
-       初期項目
-    --------------------------------------------- */
+    /*
+     * 初期項目
+     */
 
     const firstOption =
       document.createElement(
@@ -863,9 +865,9 @@ async function loadProducts() {
     );
 
 
-    /* ---------------------------------------------
-       商品を追加
-    --------------------------------------------- */
+    /*
+     * 商品を追加
+     */
 
     products.forEach(
       function(product, index) {
@@ -933,10 +935,6 @@ document
         this.value;
 
 
-      /* ---------------------------------------------
-         商品未選択
-      --------------------------------------------- */
-
       if (
         index === ''
       ) {
@@ -961,26 +959,10 @@ document
             'none';
 
 
-        /*
-         * 入力欄も0に戻す
-         */
-
-        document
-          .getElementById(
-            'remainderInput'
-          )
-          .value =
-            0;
-
-
         return;
 
       }
 
-
-      /* ---------------------------------------------
-         商品取得
-      --------------------------------------------- */
 
       selectedProduct =
         products[
@@ -1009,10 +991,6 @@ document
 
 function displaySelectedProduct() {
 
-  /* -----------------------------------------------
-     JAN
-  ----------------------------------------------- */
-
   document
     .getElementById(
       'jan'
@@ -1021,10 +999,6 @@ function displaySelectedProduct() {
       selectedProduct.jan ||
       '-';
 
-
-  /* -----------------------------------------------
-     パック数
-  ----------------------------------------------- */
 
   document
     .getElementById(
@@ -1035,10 +1009,6 @@ function displaySelectedProduct() {
       '-';
 
 
-  /* -----------------------------------------------
-     1パックあたり
-  ----------------------------------------------- */
-
   document
     .getElementById(
       'perPack'
@@ -1048,24 +1018,17 @@ function displaySelectedProduct() {
       '-';
 
 
-  /* -----------------------------------------------
-     現在の端数
-  ----------------------------------------------- */
-
   document
     .getElementById(
       'currentRemainder'
     )
     .textContent =
       selectedProduct.remainder ??
-      0;
+      '-';
 
 
   /*
-   * 重要
-   *
-   * 現在の端数は入力欄には入れない。
-   * 新しく入力する値なので、毎回0から開始する。
+   * 現在の端数を入力欄に入れる
    */
 
   document
@@ -1073,12 +1036,13 @@ function displaySelectedProduct() {
       'remainderInput'
     )
     .value =
+      selectedProduct.remainder ??
       0;
 
 
-  /* -----------------------------------------------
-     商品情報表示
-  ----------------------------------------------- */
+  /*
+   * 商品情報表示
+   */
 
   document
     .getElementById(
@@ -1088,9 +1052,9 @@ function displaySelectedProduct() {
       'block';
 
 
-  /* -----------------------------------------------
-     端数入力表示
-  ----------------------------------------------- */
+  /*
+   * 端数入力表示
+   */
 
   document
     .getElementById(
@@ -1100,16 +1064,16 @@ function displaySelectedProduct() {
       'block';
 
 
-  /* -----------------------------------------------
-     合計計算
-  ----------------------------------------------- */
+  /*
+   * 合計計算
+   */
 
   updateTotal();
 
 
-  /* -----------------------------------------------
-     入力欄へカーソル
-  ----------------------------------------------- */
+  /*
+   * 入力欄へカーソル
+   */
 
   document
     .getElementById(
@@ -1136,21 +1100,7 @@ function updateTotal() {
   }
 
 
-  /*
-   * 現在の端数
-   */
-
-  const currentRemainder =
-    Number(
-      selectedProduct.remainder
-    ) || 0;
-
-
-  /*
-   * 今回追加する端数
-   */
-
-  const inputRemainder =
+  const remainder =
     Number(
       document
         .getElementById(
@@ -1160,35 +1110,14 @@ function updateTotal() {
     ) || 0;
 
 
-  /*
-   * 変更後の端数
-   */
-
-  const newRemainder =
-    currentRemainder +
-    inputRemainder;
-
-
-  /*
-   * パック分
-   */
-
-  const packTotal =
+  const total =
     Number(
       selectedProduct.packCount
     ) *
     Number(
       selectedProduct.perPack
-    );
-
-
-  /*
-   * 変更後の合計
-   */
-
-  const total =
-    packTotal +
-    newRemainder;
+    ) +
+    remainder;
 
 
   document
@@ -1222,9 +1151,9 @@ document
 async function confirmRemainder() {
 
 
-  /* -----------------------------------------------
-     商品未選択
-  ----------------------------------------------- */
+  /*
+   * 商品未選択
+   */
 
   if (
     !selectedProduct
@@ -1240,9 +1169,9 @@ async function confirmRemainder() {
   }
 
 
-  /* -----------------------------------------------
-     保存中
-  ----------------------------------------------- */
+  /*
+   * 保存中
+   */
 
   if (
     processing
@@ -1265,9 +1194,9 @@ async function confirmRemainder() {
     );
 
 
-  /* -----------------------------------------------
-     整数チェック
-  ----------------------------------------------- */
+  /*
+   * 整数チェック
+   */
 
   if (
     !Number.isInteger(
@@ -1287,9 +1216,9 @@ async function confirmRemainder() {
   }
 
 
-  /* -----------------------------------------------
-     0未満禁止
-  ----------------------------------------------- */
+  /*
+   * 0未満禁止
+   */
 
   if (
     remainder < 0
@@ -1313,9 +1242,9 @@ async function confirmRemainder() {
     );
 
 
-  /* -----------------------------------------------
-     保存開始
-  ----------------------------------------------- */
+  /*
+   * 保存開始
+   */
 
   processing =
     true;
@@ -1333,25 +1262,11 @@ async function confirmRemainder() {
   try {
 
 
-    /* ---------------------------------------------
-       GASへ送信
-       ---------------------------------------------
-
-       GAS側で
-
-       現在の端数 + 今回入力した端数
-
-       の計算を行います。
-
-       例：
-
-       現在5個
-       今回4個
-
-       ↓
-
-       9個
-    --------------------------------------------- */
+    /*
+     * GASへ送信
+     *
+     * E列の端数を変更
+     */
 
     const result =
       await sendToGAS(
@@ -1370,9 +1285,9 @@ async function confirmRemainder() {
     );
 
 
-    /* ---------------------------------------------
-       エラー
-    --------------------------------------------- */
+    /*
+     * エラー
+     */
 
     if (
       !result.success
@@ -1386,9 +1301,9 @@ async function confirmRemainder() {
     }
 
 
-    /* ---------------------------------------------
-       保存成功
-    --------------------------------------------- */
+    /*
+     * 保存成功
+     */
 
     selectedProduct.remainder =
       result.remainder;
@@ -1402,9 +1317,9 @@ async function confirmRemainder() {
       result.total;
 
 
-    /* ---------------------------------------------
-       現在の端数を更新
-    --------------------------------------------- */
+    /*
+     * 表示更新
+     */
 
     document
       .getElementById(
@@ -1414,10 +1329,6 @@ async function confirmRemainder() {
         result.remainder;
 
 
-    /* ---------------------------------------------
-       パック数を更新
-    --------------------------------------------- */
-
     document
       .getElementById(
         'packCount'
@@ -1426,38 +1337,12 @@ async function confirmRemainder() {
         result.packCount;
 
 
-    /* ---------------------------------------------
-       ★重要
-       入力欄を0に戻す
-    --------------------------------------------- */
-
-    input.value =
-      0;
-
-
-    /* ---------------------------------------------
-       0に戻した状態で
-       次回入力時の合計を表示
-    --------------------------------------------- */
-
     updateTotal();
 
-
-    /* ---------------------------------------------
-       保存完了
-    --------------------------------------------- */
 
     showMessage(
       '✓ 端数を保存しました'
     );
-
-
-    /* ---------------------------------------------
-       次の入力のために
-       入力欄へカーソル
-    --------------------------------------------- */
-
-    input.focus();
 
 
   }
@@ -1499,25 +1384,13 @@ window.addEventListener(
   'load',
   function() {
 
-    /*
-     * ページを開いた時も
-     * 入力欄を必ず0にする
-     */
-
-    document
-      .getElementById(
-        'remainderInput'
-      )
-      .value =
-        0;
-
-
     loadProducts();
 
   }
 );
 
 </script>
+
 
 </body>
 </html>
