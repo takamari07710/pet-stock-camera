@@ -1,276 +1,142 @@
 <!DOCTYPE html>
-
 <html lang="ja">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
 >
-
 <title>ペットシーツ在庫一覧</title>
-
-
 <style>
-
     body {
-
         font-family: sans-serif;
-
         margin: 0;
-
         padding: 20px;
-
         background: #f5f5f5;
-
     }
-
-
     h1 {
-
         margin-top: 0;
-
         font-size: 24px;
-
     }
-
-
     button {
-
         font-size: 16px;
-
         padding: 10px 18px;
-
         margin-bottom: 15px;
-
         cursor: pointer;
-
     }
-
-
     .status {
-
         margin-bottom: 15px;
-
         color: #555;
-
     }
-
-
     .table-container {
-
         overflow-x: auto;
-
         background: white;
-
         border-radius: 8px;
-
     }
-
-
     table {
-
         width: 100%;
-
         border-collapse: collapse;
-
         min-width: 600px;
-
     }
-
-
     th,
     td {
-
         border-bottom: 1px solid #ddd;
-
         padding: 10px;
-
         text-align: center;
-
         white-space: nowrap;
-
     }
-
-
     th {
-
         background: #eee;
-
         position: sticky;
-
         top: 0;
-
     }
-
-
     td.product-name {
-
         text-align: center;
-
     }
-
-
     .error {
-
         color: red;
-
     }
-
 </style>
-
 </head>
-
-
 <body>
-
-
 <h1>ペットシーツ在庫一覧</h1>
-
-
 <button
     type="button"
     onclick="location.href='camera.html'"
 >
     📷 カメラに戻る
 </button>
-
-
 <button
     type="button"
     onclick="loadStock()"
 >
     🔄 更新
 </button>
-
-
 <div
     id="status"
     class="status"
 >
     読み込み中...
 </div>
-
-
 <div class="table-container">
-
-
 <table>
-
 <thead>
-
 <tr>
-
     <th>JANコード</th>
-
     <th>商品名</th>
-
     <th>パック数</th>
-
     <th>1パックあたり</th>
-
     <th>端数</th>
-
 </tr>
-
 </thead>
-
-
 <tbody id="stockTable">
-
 </tbody>
-
-
 </table>
-
-
 </div>
-
-
 <script>
-
-
 // ========================================
 // GASのURL
 // ========================================
-
 const GAS_URL =
     "https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec";
-
-
 // ========================================
 // JSONP用
 // ========================================
-
 function loadStock() {
-
     document.getElementById("status").textContent =
         "読み込み中...";
-
-
     document.getElementById("status").className =
         "status";
-
-
     const callbackName =
         "stockCallback_" + Date.now();
-
-
     window[callbackName] = function(result) {
-
         try {
-
             if (
                 !result ||
                 result.success !== true
             ) {
-
                 throw new Error(
-
                     result &&
                     result.message
-
                         ? result.message
-
                         : "データ取得に失敗しました"
-
                 );
-
             }
-
-
             displayStock(
                 result.data
             );
-
-
         }
         catch (error) {
-
             document.getElementById("status").textContent =
                 "エラー：" + error.message;
-
-
             document.getElementById("status").className =
                 "status error";
-
         }
-
-
         delete window[callbackName];
-
         script.remove();
-
     };
-
-
     const script =
         document.createElement("script");
-
-
     script.src =
         GAS_URL +
         "?action=getStockList" +
@@ -278,163 +144,95 @@ function loadStock() {
         callbackName +
         "&_=" +
         Date.now();
-
-
     script.onerror = function() {
-
         document.getElementById("status").textContent =
             "GASへの接続に失敗しました";
-
-
         document.getElementById("status").className =
             "status error";
-
-
         delete window[callbackName];
-
         script.remove();
-
     };
-
-
     document.body.appendChild(script);
-
 }
-
-
 // ========================================
 // 在庫表示
 // ========================================
-
 function displayStock(data) {
-
     const table =
         document.getElementById("stockTable");
-
-
     table.innerHTML = "";
-
-
     if (
         !data ||
         data.length === 0
     ) {
-
         document.getElementById("status").textContent =
             "在庫データがありません";
-
         return;
-
     }
-
-
     data.forEach(function(item) {
-
         const tr =
             document.createElement("tr");
-
-
         tr.innerHTML = `
-
             <td>
                 ${escapeHtml(item.jan)}
             </td>
-
-
             <td class="product-name">
                 ${escapeHtml(item.productName)}
             </td>
-
-
             <td>
                 ${item.packCount}
             </td>
-
-
             <td>
                 ${item.perPack}
             </td>
-
-
             <td>
                 ${item.remainder}
             </td>
-
         `;
-
-
         table.appendChild(tr);
-
     });
-
-
     document.getElementById("status").textContent =
         data.length +
         "件の在庫を表示しています";
-
-
     document.getElementById("status").className =
         "status";
-
 }
-
-
 // ========================================
 // HTMLエスケープ
 // ========================================
-
 function escapeHtml(value) {
-
     if (
         value === null ||
         value === undefined
     ) {
-
         return "";
-
     }
-
-
     return String(value)
-
         .replace(
             /&/g,
             "&amp;"
         )
-
         .replace(
             /</g,
             "&lt;"
         )
-
         .replace(
             />/g,
             "&gt;"
         )
-
         .replace(
             /"/g,
             "&quot;"
         )
-
         .replace(
             /'/g,
             "&#039;"
         );
-
 }
-
-
 // ========================================
 // ページを開いたときに読み込む
 // ========================================
-
 loadStock();
-
-
 </script>
-
-
 </body>
-
 </html>
