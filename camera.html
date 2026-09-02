@@ -38,59 +38,94 @@
     ================================================= */
 
     .mode {
-
       display: flex;
-
       gap: 10px;
-
       width: 100%;
-
       max-width: 500px;
-
       margin: 15px auto;
-
     }
 
 
     .mode button {
-
       flex: 1;
-
       padding: 15px;
-
       font-size: 18px;
-
       border: none;
-
       border-radius: 10px;
-
       background: #ddd;
-
     }
 
 
     .mode button.active {
-
       background: #2196f3;
-
       color: white;
-
     }
 
-    /* =========================
+
+    /* =================================================
        カメラ
-    ========================= */
+       
+       通常時
+       400px × 200px
+       
+       スマホ
+       画面幅に合わせて縮小
+    ================================================= */
+
     #cameraArea {
       position: relative;
-      width: 100%;
-      maxwidth: 500px;
+
+      width: 400px;
+      height: 200px;
+
+      max-width: 100%;
+
       margin: auto;
+
+      box-sizing: border-box;
     }
+
+
     #reader {
       width: 100%;
+      height: 100%;
+
       background: white;
-      borderradius: 10px;
+
+      border-radius: 10px;
+
       overflow: hidden;
+
+      box-sizing: border-box;
+    }
+
+
+    /*
+     * html5-qrcodeが作るカメラ映像
+     *
+     * スマホでもカメラエリアから
+     * はみ出さないようにする
+     */
+
+    #reader video {
+      width: 100% !important;
+      height: 200px !important;
+
+      object-fit: cover;
+
+      display: block;
+    }
+
+
+    /*
+     * html5-qrcode内部の読み取り範囲
+     *
+     * 必要に応じてライブラリ側の
+     * サイズ指定を邪魔しないようにする
+     */
+
+    #reader > div {
+      max-width: 100%;
     }
 
 
@@ -105,11 +140,8 @@
       position: absolute;
 
       top: 0;
-
       left: 0;
-
       right: 0;
-
       bottom: 0;
 
       z-index: 9999;
@@ -449,6 +481,46 @@
 
       }
 
+
+      /*
+       * カメラは画面幅に合わせる
+       *
+       * 例：
+       * 390pxのスマホ
+       * → カメラ 390px × 200px
+       *
+       * 360pxのスマホ
+       * → カメラ 360px × 200px
+       */
+
+      #cameraArea {
+
+        width: 100%;
+
+        max-width: 400px;
+
+        height: 200px;
+
+      }
+
+
+      #reader {
+
+        width: 100%;
+
+        height: 200px;
+
+      }
+
+
+      #reader video {
+
+        width: 100% !important;
+
+        height: 200px !important;
+
+      }
+
     }
 
   </style>
@@ -688,9 +760,6 @@ let mode = 'in';
 
 /*
  * 現在GASとの通信処理中か
- *
- * true
- * → バーコードを読まない
  */
 
 let processing = false;
@@ -726,10 +795,11 @@ let currentProduct = null;
 
 /*
  * =================================================
- * ★ 重要
+ * 確定待ち状態
  *
  * true
- * → 現在の商品がまだ確定されていない
+ * → 商品を読み取り済み
+ * → まだ「確定」していない
  * → 次のバーコードを読まない
  *
  * false
@@ -1081,14 +1151,7 @@ function displayProduct(result) {
 
 
   /*
-   * =================================================
-   * ★ここが重要
-   *
-   * 商品情報が表示されたら
-   * 「確定待ち」にする
-   *
-   * したがって次のバーコードは読まない
-   * =================================================
+   * 確定待ち
    */
 
   waitingForConfirmation =
@@ -1178,7 +1241,7 @@ document
 
 
 /* =================================================
-   ★ 端数確定
+   端数確定
 ================================================= */
 
 async function confirmRemainder() {
@@ -1201,7 +1264,7 @@ async function confirmRemainder() {
 
 
   /*
-   * 現在保存処理中なら何もしない
+   * 保存処理中なら何もしない
    */
 
   if (processing) {
@@ -1212,7 +1275,7 @@ async function confirmRemainder() {
 
 
   /*
-   * 確定待ち状態でなければ何もしない
+   * 確定待ちでなければ何もしない
    */
 
   if (!waitingForConfirmation) {
@@ -1257,7 +1320,7 @@ async function confirmRemainder() {
 
 
   /*
-   * 端数は0以上
+   * 0未満は禁止
    */
 
   if (
@@ -1283,17 +1346,19 @@ async function confirmRemainder() {
 
 
   /*
-   * =================================================
-   * ★確定処理開始
-   *
-   * 保存中はバーコードを読まない
-   * =================================================
+   * 保存開始
    */
 
-  processing = true;
+  processing =
+    true;
 
 
-  button.disabled = true;
+  /*
+   * ボタン無効化
+   */
+
+  button.disabled =
+    true;
 
 
   showMessage(
@@ -1305,7 +1370,7 @@ async function confirmRemainder() {
 
 
     /*
-     * GASへ端数を送信
+     * GASへ保存
      */
 
     const result =
@@ -1326,9 +1391,7 @@ async function confirmRemainder() {
 
 
     /*
-     * =================================================
      * GAS側エラー
-     * =================================================
      */
 
     if (
@@ -1336,18 +1399,20 @@ async function confirmRemainder() {
     ) {
 
       /*
-       * まだ確定していないので
-       * 確定待ち状態を維持
+       * 確定できていないので
+       * バーコード読み取り禁止を維持
        */
 
       waitingForConfirmation =
         true;
 
 
-      processing = false;
+      processing =
+        false;
 
 
-      button.disabled = false;
+      button.disabled =
+        false;
 
 
       showMessage(
@@ -1423,10 +1488,10 @@ async function confirmRemainder() {
 
     /*
      * =================================================
-     * ★★★★★ 最重要 ★★★★★
+     * ★★★★★
      *
-     * 確定成功後に
-     * 緑色の「読み取り成功」を消す
+     * 確定成功したので
+     * ここで緑色を消す
      * =================================================
      */
 
@@ -1437,7 +1502,7 @@ async function confirmRemainder() {
      * =================================================
      * 確定完了
      *
-     * ここから次のバーコードを読める
+     * 次のバーコードを読めるようにする
      * =================================================
      */
 
@@ -1450,26 +1515,29 @@ async function confirmRemainder() {
 
 
     /*
-     * 次の商品を読むまで
-     * 確定ボタンは無効
+     * 確定ボタンは無効化
      */
 
     button.disabled =
       true;
 
 
+    /*
+     * 同じJANでも次回読み取り可能
+     */
+
+    lastCode =
+      '';
+
+
+    lastScanTime =
+      0;
+
+
     showMessage(
       '✓ 入力完了。次のバーコードを読み取ってください'
     );
 
-
-    /*
-     * 同じバーコードを
-     * すぐ再読み取りしないようにする
-     *
-     * ただし次の商品が同じJANの場合でも
-     * 2秒後には読み取れる
-     */
 
   }
   catch (error) {
@@ -1483,10 +1551,8 @@ async function confirmRemainder() {
     /*
      * 通信エラー
      *
-     * 保存できたか確認できないため
-     * 緑表示は残す
-     *
-     * ユーザーが再度確定できるようにする
+     * 確定できているか不明なので
+     * 緑表示を残す
      */
 
     processing =
@@ -1526,11 +1592,8 @@ async function onScanSuccess(
 
   /*
    * =================================================
-   * ★★★★★ 最重要 ★★★★★
-   *
-   * 現在の商品がまだ確定されていない場合
-   *
-   * → 次のバーコードを完全に無視
+   * 確定待ちなら
+   * 次のバーコードを完全に無視
    * =================================================
    */
 
@@ -1549,7 +1612,7 @@ async function onScanSuccess(
 
 
   /*
-   * GAS通信処理中なら無視
+   * GAS通信中なら無視
    */
 
   if (processing) {
@@ -1586,7 +1649,7 @@ async function onScanSuccess(
 
 
   /*
-   * 商品検索中
+   * 商品検索開始
    */
 
   processing =
@@ -1604,13 +1667,6 @@ async function onScanSuccess(
 
 
   /*
-   * 前回の緑表示を消す
-   */
-
-  hideSuccessOverlay();
-
-
-  /*
    * 確定ボタン無効化
    */
 
@@ -1624,7 +1680,7 @@ async function onScanSuccess(
 
   /*
    * =================================================
-   * ★商品情報取得中も
+   * 商品情報取得中も
    * 次のバーコードを読まない
    * =================================================
    */
@@ -1689,6 +1745,7 @@ async function onScanSuccess(
 
 
       /*
+       * 商品がない場合は
        * 緑表示を消す
        */
 
@@ -1712,7 +1769,6 @@ async function onScanSuccess(
 
 
       /*
-       * 商品がないので
        * 次のバーコードを読めるようにする
        */
 
@@ -1737,11 +1793,11 @@ async function onScanSuccess(
 
 
     /*
-     * ★ displayProduct() 内で
-     * waitingForConfirmation = true
-     * になっている
+     * ここでは
+     * waitingForConfirmationをfalseにしない
      *
-     * ここでは false にしない
+     * 「確定」を押すまで
+     * 次のバーコードを読まない
      */
 
 
@@ -1877,11 +1933,13 @@ async function startScanner() {
      * =================================================
      * カメラ開始
      *
-     * カメラ表示
+     * カメラエリア
      * 400 × 200
      *
-     * 読み取り範囲
+     * バーコード読み取り範囲
      * 300 × 100
+     *
+     * スマホでは自動縮小
      * =================================================
      */
 
@@ -1894,11 +1952,68 @@ async function startScanner() {
         fps: 10,
 
 
-        qrbox: {
+        /*
+         * 読み取り範囲
+         *
+         * 通常：
+         * 300 × 100
+         *
+         * カメラ：
+         * 400 × 200
+         *
+         * → 上下左右50px
+         *
+         * スマホ：
+         * 画面幅に合わせて自動縮小
+         */
 
-          width: 300,
+        qrbox: function(
+          viewfinderWidth,
+          viewfinderHeight
+        ) {
 
-          height: 150
+          /*
+           * 横幅
+           *
+           * 最大300px
+           *
+           * 画面が400px未満なら
+           * 画面幅 - 100px
+           */
+
+          const width =
+            Math.min(
+              300,
+              Math.max(
+                200,
+                viewfinderWidth - 100
+              )
+            );
+
+
+          /*
+           * 高さ
+           *
+           * 最大100px
+           *
+           * カメラ高さ200pxに対して
+           * 上下50px
+           */
+
+          const height =
+            Math.min(
+              100,
+              Math.max(
+                80,
+                viewfinderHeight - 100
+              )
+            );
+
+
+          return {
+            width: width,
+            height: height
+          };
 
         },
 
