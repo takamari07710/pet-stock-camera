@@ -1,19 +1,13 @@
 <!DOCTYPE html>
-
 <html>
 <head>
   <meta charset="UTF-8">
-
 <meta name="viewport"
      content="width=device-width, initial-scale=1">
-
   
   <title>ペットシーツ在庫</title>
-
   <script src="https://unpkg.com/html5-qrcode"></script>
-
   <style>
-
     body {
       font-family: sans-serif;
       margin: 0;
@@ -22,23 +16,19 @@
       color: #222;
       text-align: center;
     }
-
     h1 {
       fontsize: 24px;
       margin: 10px 0 15px;
     }
-
     /* =========================
        入庫・使用
     ========================= */
-
     .mode {
       display: flex;
       gap: 10px;
       maxwidth: 500px;
       margin: 15px auto;
     }
-
     .mode button {
       flex: 1;
       padding: 15px;
@@ -47,34 +37,28 @@
       borderradius: 10px;
       background: #ddd;
     }
-
     .mode button.active {
       background: #2196f3;
       color: white;
     }
-
     /* =========================
        カメラ
     ========================= */
-
     #cameraArea {
       position: relative;
       width: 100%;
       maxwidth: 500px;
       margin: auto;
     }
-
     #reader {
       width: 100%;
       background: white;
       borderradius: 10px;
       overflow: hidden;
     }
-
     /* =========================
        読み取り成功表示
     ========================= */
-
     #successOverlay {
       display: none;
       position: absolute;
@@ -91,28 +75,23 @@
       borderradius: 10px;
       pointerevents: none;
     }
-
     #successOverlay .icon {
       fontsize: 80px;
       fontweight: bold;
       lineheight: 1;
     }
-
     #successOverlay .title {
       fontsize: 30px;
       fontweight: bold;
       margintop: 10px;
     }
-
     #successOverlay .code {
       fontsize: 18px;
       margintop: 10px;
     }
-
     /* =========================
        商品情報
     ========================= */
-
     .result {
       maxwidth: 500px;
       margin: 15px auto;
@@ -120,13 +99,11 @@
       background: white;
       borderradius: 10px;
     }
-
     #productName {
       font-size: 24px;
       font-weight: bold;
       margin-bottom: 15px;
     }
-
     .stockRow {
     display: grid;
     grid-template-columns: 140px 80px 60px;
@@ -137,35 +114,28 @@
     font-size: 18px;
     border-bottom: 1px solid #ccc;
     }
-
     .stockRow > span {
     text-align: center;
     }
-
     .stockValue {
     font-size: 24px;
     font-weight: bold;
     text-align: center;
     }
-
-
     /* =========================
        端数入力
     ========================= */
-
     .remainderArea {
       margin-top: 18px;
       padding: 15px;
       background: #f1f8ff;
       border-radius: 10px;
     }
-
     .remainderTitle {
       font-size: 18px;
       font-weight: bold;
       margin-bottom: 10px;
     }
-
     #remainderInput {
       width: 120px;
       padding: 12px;
@@ -175,12 +145,10 @@
       border-radius: 8px;
       box-sizing: border-box;
     }
-
     .remainderUnit {
       font-size: 18px;
       margin-left: 5px;
     }
-
     #confirmButton {
       display: block;
       width: 100%;
@@ -194,50 +162,41 @@
       color: white;
       cursor: pointer;
     }
-
     #confirmButton:disabled {
       background: #aaa;
       color: #eee;
       cursor: not-allowed;
     }
-
     /* =========================
        合計
     ========================= */
-
     .totalArea {
       margin-top: 15px;
       padding: 12px;
       background: #fff8e1;
       border-radius: 10px;
     }
-
     .totalLabel {
       font-size: 18px;
     }
-
     #total {
       font-size: 36px;
       font-weight: bold;
       margin-top: 5px;
     }
-
     
     /* =========================
        警告
     ========================= */
-
     #warning {
       margin-top: 10px;
       color: #d32f2f;
       font-weight: bold;
     }
-
     
     /* =========================
        メッセージ
     ========================= */
-
     #message {
       max-width: 500px;
       margin: 15px auto;
@@ -245,24 +204,19 @@
       border-radius: 10px;
       background: #e8f5e9;
     }
-
     #message.error {
       background: #ffebee;
       color: #c62828;
     }
-
     
   </style>
 </head>
-
   
 <body>
 <h1>🐾 ペットシーツ在庫</h1>
-
 <!-- =========================
      入庫・使用
 ========================= -->
-
 <div class="mode">
 <button
  id="inButton"
@@ -270,14 +224,12 @@
  onclick="setMode('in')">
 ＋ 入庫
   </button>
-
 <button
  id="outButton"
  onclick="setMode('out')">
 − 使用
   </button>
 </div>
-
 <!-- =========================
      カメラ
 ========================= -->
@@ -296,7 +248,6 @@
     </div>
   </div>
 </div>
-
   
 <!-- =========================
      商品情報
@@ -331,7 +282,6 @@
       個
     </span>
     </div>
-
   
   <!-- =========================
        端数入力
@@ -340,11 +290,9 @@
     class="remainderArea"
     id="remainderArea"
     style="display:none;">
-
 <div class="remainderTitle">
   端数を入力してください
 </div>
-
 <input
   type="number"
   id="remainderInput"
@@ -352,31 +300,23 @@
   step="1"
   inputmode="numeric"
   autocomplete="off">
-
 <span class="remainderUnit">
   個
 </span>
-
-
 <button
   id="confirmButton"
   type="button"
   onclick="confirmRemainder()">
   確定
 </button>
-
   </div>
-
   <!-- =========================
        合計
   ========================= -->
-
   <div
     class="totalArea"
     id="totalArea"
     style="display:none;">
-
-
 <div class="totalLabel">
   合計
 </div>
@@ -389,29 +329,21 @@
   </div>
   <div id="warning"></div>
 </div>
-
 <!-- =========================
      メッセージ
 ========================= -->
-
 <div id="message">
   カメラを準備しています…
 </div>
 <script>
-
-
 /* =================================================
    GAS URL
 ================================================= */
-
 const GAS_URL =
   'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec';
-
-
 /* =================================================
    変数
 ================================================= */
-
 let scanner = null;
 let mode = 'in';
 let processing = false;
@@ -419,26 +351,18 @@ let lastCode = '';
 let lastScanTime = 0;
 let currentJAN = '';
 let currentProduct = null;
-
-
 /*
  * 確定後かどうか
  *
  * true ＝ 次のバーコードを読むまで
  *        確定ボタンを押せない
  */
-
 let waitingForNextScan = false;
-
-
 /* =================================================
    入庫・使用モード
 ================================================= */
-
 function setMode(newMode) {
-
   mode = newMode;
-
   document
     .getElementById('inButton')
     .classList
@@ -446,7 +370,6 @@ function setMode(newMode) {
       'active',
       mode === 'in'
     );
-
   document
     .getElementById('outButton')
     .classList
@@ -454,98 +377,70 @@ function setMode(newMode) {
       'active',
       mode === 'out'
     );
-
   showMessage(
     mode === 'in'
       ? '＋ 入庫モード'
       : '− 使用モード'
   );
-
 }
-
-
 /* =================================================
    メッセージ
 ================================================= */
-
 function showMessage(
   text,
   error = false
 ) {
-
   const message =
     document.getElementById(
       'message'
     );
-
   message.textContent =
     text;
-
   message.className =
     error
       ? 'error'
       : '';
-
 }
-
-
 /* =================================================
    読み取り成功表示
 ================================================= */
-
 function showSuccessOverlay(
   code
 ) {
-
   const overlay =
     document.getElementById(
       'successOverlay'
     );
-
   const codeElement =
     document.getElementById(
       'successCode'
     );
-
   codeElement.textContent =
     code;
-
   overlay.style.display =
     'flex';
-
 }
-
-
 /*
  * 緑色表示を消す
  */
-
 function hideSuccessOverlay() {
-
   const overlay =
     document.getElementById(
       'successOverlay'
     );
-
   overlay.style.display =
     'none';
-
 }
-
-
 /* =================================================
    GAS通信
 ================================================= */
-
 function sendToGAS(
   action,
   jan,
   extraParams = {}
 ) {
-
   return new Promise(
     function(resolve, reject) {
-
       const callbackName =
         'gasCallback_' +
         Date.now() +
@@ -553,79 +448,53 @@ function sendToGAS(
         Math.floor(
           Math.random() * 100000
         );
-
-
       const script =
         document.createElement(
           'script'
         );
-
-
       let finished =
         false;
-
-
       /*
        * GAS返答
        */
-
       window[callbackName] =
         function(result) {
-
           if (finished) {
             return;
           }
-
           finished = true;
-
           console.log(
             'GAS返答:',
             result
           );
-
           delete window[
             callbackName
           ];
-
           script.remove();
-
           resolve(result);
-
         };
-
-
       /*
        * 通信エラー
        */
-
       script.onerror =
         function() {
-
           if (finished) {
             return;
           }
-
           finished = true;
-
           delete window[
             callbackName
           ];
-
           script.remove();
-
           reject(
             new Error(
               'GASとの通信に失敗しました'
             )
           );
-
         };
-
-
       /*
        * URL
        */
-
       let url =
         GAS_URL +
         '?action=' +
@@ -640,16 +509,12 @@ function sendToGAS(
         encodeURIComponent(
           callbackName
         );
-
-
       /*
        * 追加パラメータ
        */
-
       for (
         const key in extraParams
       ) {
-
         url +=
           '&' +
           encodeURIComponent(key) +
@@ -657,143 +522,100 @@ function sendToGAS(
           encodeURIComponent(
             extraParams[key]
           );
-
       }
-
-
       console.log(
         'GAS送信:',
         url
       );
-
-
       script.src =
         url;
-
-
       document
         .body
         .appendChild(
           script
         );
-
     }
   );
-
 }
-
-
 /* =================================================
    商品情報表示
 ================================================= */
-
 function displayProduct(
   result
 ) {
-
   currentProduct =
     result;
-
-
   document
     .getElementById(
       'productName'
     )
     .textContent =
       result.name;
-
-
   document
     .getElementById(
       'packCount'
     )
     .textContent =
       result.packCount;
-
-
   document
     .getElementById(
       'perPack'
     )
     .textContent =
       result.perPack;
-
-
   document
     .getElementById(
       'remainderInput'
     )
     .value =
       result.remainder;
-
-
   document
     .getElementById(
       'total'
     )
     .textContent =
       result.total;
-
-
   document
     .getElementById(
       'remainderArea'
     )
     .style.display =
       'block';
-
-
   document
     .getElementById(
       'totalArea'
     )
     .style.display =
       'block';
-
-
   updateTotal();
-
-
   /*
    * 今回の商品を読み込んだので
    * 確定ボタンを使用可能にする
    */
-
   waitingForNextScan =
     false;
-
   document
     .getElementById(
       'confirmButton'
     )
     .disabled =
       false;
-
-
   /*
    * 端数入力欄へカーソル
    */
-
   document
     .getElementById(
       'remainderInput'
     )
     .focus();
-
 }
-
-
 /* =================================================
    合計計算
 ================================================= */
-
 function updateTotal() {
-
   if (!currentProduct) {
     return;
   }
-
-
   const remainder =
     Number(
       document
@@ -802,8 +624,6 @@ function updateTotal() {
         )
         .value
     ) || 0;
-
-
   const total =
     Number(
       currentProduct.packCount
@@ -812,22 +632,16 @@ function updateTotal() {
       currentProduct.perPack
     ) +
     remainder;
-
-
   document
     .getElementById(
       'total'
     )
     .textContent =
       total;
-
 }
-
-
 /* =================================================
    端数入力変更時
 ================================================= */
-
 document
   .getElementById(
     'remainderInput'
@@ -836,249 +650,168 @@ document
     'input',
     updateTotal
   );
-
-
 /* =================================================
    ★ 端数確定
 ================================================= */
-
 async function confirmRemainder() {
-
   /*
    * すでに確定済みなら何もしない
    */
-
   if (waitingForNextScan) {
-
     return;
-
   }
-
-
   if (!currentJAN) {
-
     showMessage(
       '先にバーコードを読み取ってください。',
       true
     );
-
     return;
-
   }
-
-
   if (!currentProduct) {
-
     showMessage(
       '商品情報がありません。',
       true
     );
-
     return;
-
   }
-
-
   const input =
     document.getElementById(
       'remainderInput'
     );
-
-
   const remainder =
     Number(
       input.value
     );
-
-
   /*
    * 入力チェック
    */
-
   if (
     !Number.isInteger(
       remainder
     )
   ) {
-
     showMessage(
       '端数は整数で入力してください。',
       true
     );
-
     input.focus();
-
     return;
-
   }
-
-
   /*
    * 端数は0以上
    *
    * 上限は設定しない
    */
-
   if (
     remainder < 0
   ) {
-
     showMessage(
       '端数は0以上で入力してください。',
       true
     );
-
     input.focus();
-
     return;
-
   }
-
-
   const button =
     document.getElementById(
       'confirmButton'
     );
-
-
   /*
    * ==========================================
    * ★ ここで確定ボタンをロック
    * ==========================================
    */
-
   button.disabled =
     true;
-
   waitingForNextScan =
     true;
-
-
   showMessage(
     '端数を保存しています…'
   );
-
-
   try {
-
     /*
      * GASへ端数を送信
      */
-
     const result =
       await sendToGAS(
-
         'setRemainder',
-
         currentJAN,
-
         {
           remainder:
             remainder
         }
-
       );
-
-
     console.log(
       '端数保存結果:',
       result
     );
-
-
     /*
      * GAS側エラー
      */
-
     if (
       !result.success
     ) {
-
       /*
        * エラーの場合だけ
        * 再度確定できるようにする
        */
-
       waitingForNextScan =
         false;
-
       button.disabled =
         false;
-
       showMessage(
         result.message ||
         '保存できませんでした。',
         true
       );
-
       return;
-
     }
-
-
     /*
      * 最新情報を表示
      */
-
     document
       .getElementById(
         'productName'
       )
       .textContent =
       result.name;
-
-
     document
       .getElementById(
         'packCount'
       )
       .textContent =
       result.packCount;
-
-
     document
       .getElementById(
         'perPack'
       )
       .textContent =
       result.perPack;
-
-
     document
       .getElementById(
         'remainderInput'
       )
       .value =
       result.remainder;
-
-
     document
       .getElementById(
         'total'
       )
       .textContent =
       result.total;
-
-
     /*
      * 商品情報を更新
      */
-
     currentProduct =
       result;
-
-
     /*
      * ==========================================
      * 入力完了
      * ==========================================
      */
-
     showMessage(
       '✓ 入力完了'
     );
-
-
     /*
      * ★重要
      *
@@ -1088,97 +821,60 @@ async function confirmRemainder() {
      * 次のバーコードを読み取ったときに
      * 消す
      */
-
-
   }
-
-
   catch (error) {
-
     console.error(
       error
     );
-
-
     /*
      * 通信エラーの場合は
      * 再度確定できるようにする
      */
-
     waitingForNextScan =
       false;
-
     button.disabled =
       false;
-
-
     showMessage(
       error.message,
       true
     );
-
   }
-
 }
-
-
 /* =================================================
    JAN読み取り成功
 ================================================= */
-
 async function onScanSuccess(
   decodedText
 ) {
-
   const now =
     Date.now();
-
-
   /*
    * 処理中は無視
    */
-
   if (processing) {
     return;
   }
-
-
   /*
    * 同じJANの連続読み取り防止
    */
-
   if (
-
     decodedText === lastCode &&
-
     now - lastScanTime < 2000
-
   ) {
-
     return;
-
   }
-
-
   lastCode =
     decodedText;
-
   lastScanTime =
     now;
-
   processing =
     true;
-
   currentJAN =
     decodedText;
-
-
   console.log(
     'JAN読み取り:',
     decodedText
   );
-
-
   /*
    * ==========================================
    * 新しいバーコードを読み取った
@@ -1187,80 +883,53 @@ async function onScanSuccess(
    * ここで初めて
    * 前回の緑色表示を消す
    */
-
   hideSuccessOverlay();
-
-
   /*
    * 新しい商品なので
    * 一旦確定ボタンを無効化
    */
-
   document
     .getElementById(
       'confirmButton'
     )
     .disabled =
       true;
-
-
   waitingForNextScan =
     true;
-
-
   /*
    * 新しい商品情報を取得するまで
    * 以前の商品を使えないようにする
    */
-
   currentProduct =
     null;
-
-
   /*
    * 新しい読み取り成功表示
    */
-
   showSuccessOverlay(
     decodedText
   );
-
-
   showMessage(
     '読み取り成功。商品情報を取得しています…'
   );
-
-
   try {
-
     /*
      * ======================================
      * 商品検索
      * ======================================
      */
-
     const result =
       await sendToGAS(
-
         'getProduct',
-
         decodedText
-
       );
-
-
     console.log(
       '商品検索結果:',
       result
     );
-
-
     /*
      * 商品がない
      */
-
     if (!result.success) {
-
       document
         .getElementById(
           'productName'
@@ -1268,177 +937,117 @@ async function onScanSuccess(
         .textContent =
         result.message ||
         '商品が見つかりません';
-
-
       showMessage(
         result.message ||
         '商品が見つかりません。',
         true
       );
-
-
       /*
        * 商品が見つからないので
        * 確定ボタンは無効のまま
        */
-
       return;
-
     }
-
-
     /*
      * 商品情報表示
      *
      * ここで確定ボタンが有効になる
      */
-
     displayProduct(
       result
     );
-
-
     showMessage(
       '端数を入力して「確定」を押してください'
     );
-
-
   }
-
-
   catch (error) {
-
     console.error(
       error
     );
-
-
     showMessage(
       error.message,
       true
     );
-
   }
-
-
   finally {
-
     /*
      * 少し待ってから
      * 次の読み取りを許可
      */
-
     setTimeout(
       function() {
-
         processing =
           false;
-
       },
       500
     );
-
   }
-
 }
-
-
 /* =================================================
    カメラ起動
 ================================================= */
-
 async function startScanner() {
-
   try {
-
     showMessage(
       'カメラを起動しています…'
     );
-
-
     scanner =
       new Html5Qrcode(
         'reader'
       );
-
-
     /*
      * カメラ一覧
      */
-
     const cameras =
       await Html5Qrcode
         .getCameras();
-
-
     if (
       !cameras ||
       cameras.length === 0
     ) {
-
       throw new Error(
         'カメラが見つかりません'
       );
-
     }
-
-
     /*
      * 最初のカメラ
      */
-
     let cameraId =
       cameras[0].id;
-
-
     /*
      * 背面カメラ優先
      */
-
     for (
       const camera
       of cameras
     ) {
-
       const label =
         (
           camera.label ||
           ''
         ).toLowerCase();
-
-
       if (
-
         label.includes('back') ||
         label.includes('rear') ||
         label.includes('environment') ||
         label.includes('背面')
-
       ) {
-
         cameraId =
           camera.id;
-
         break;
-
       }
-
     }
-
-
     /*
      * カメラ開始
      */
-
     await scanner.start(
       cameraId,
       {
         fps: 10,
         qrbox: {
-          width: 300,
+          width: 500,
           height: 100
         },
-
         formatsToSupport: [
           Html5QrcodeSupportedFormats
             .EAN_13,
@@ -1448,80 +1057,49 @@ async function startScanner() {
             .UPC_A
         ]
       },
-
-
       /*
        * 読み取り成功
        */
-
       onScanSuccess,
-
-
       /*
        * 読み取り失敗
        */
-
       function() {
-
         // 無視
-
       }
-
     );
-
-
     showMessage(
       '📷 バーコードを映してください'
     );
-
   }
-
-
   catch (error) {
-
     console.error(
       error
     );
-
-
     showMessage(
-
       'カメラを起動できません：' +
       error.message,
-
       true
-
     );
-
   }
-
 }
-
-
 /* =================================================
    ページ読み込み
 ================================================= */
-
 window.addEventListener(
   'load',
   function() {
-
     startScanner();
-
   }
 );
-
 </script>
-
 <!-- =========================
      在庫一覧ボタン
 ========================= -->
-
 <div style="
   max-width:500px;
   margin:20px auto 10px;
 ">
-
   <button
     type="button"
     onclick="location.href='stock.html'"
@@ -1539,8 +1117,6 @@ window.addEventListener(
   >
     📦 在庫一覧を見る
   </button>
-
 </div>
-
 </body>
 </html>
