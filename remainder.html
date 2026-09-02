@@ -556,16 +556,6 @@ function displaySelectedProduct() {
     .textContent =
       selectedProduct.jan ||
       '-';
-  /* -----------------------------------------------
-     現在の端数
-  ----------------------------------------------- */
-  document
-    .getElementById(
-      'currentRemainder'
-    )
-    .textContent =
-      selectedProduct.remainder ??
-      0;
   /*
    * 今回入力する値は必ず0から開始
    */
@@ -739,15 +729,6 @@ async function confirmRemainder() {
     --------------------------------------------- */
     selectedProduct.remainder =
       result.remainder;
-    /* ---------------------------------------------
-       現在の端数を更新
-    --------------------------------------------- */
-    document
-      .getElementById(
-        'currentRemainder'
-      )
-      .textContent =
-        result.remainder;
     /* ---------------------------------------------
        ★入力欄を0に戻す
     --------------------------------------------- */
