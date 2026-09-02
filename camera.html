@@ -666,7 +666,7 @@ async function onScanSuccess(
 
   if (
     decodedText === lastCode &&
-    now - lastScanTime < 1000
+    now - lastScanTime < 2000
   ) {
 
     return;
