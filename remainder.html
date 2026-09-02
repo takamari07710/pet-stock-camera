@@ -141,6 +141,23 @@
       cursor: pointer;
     }
     /* =================================================
+   在庫一覧ボタン
+================================================= */
+#stockButton {
+  display: block;
+  width: 100%;
+  max-width: 500px;
+  margin: 15px auto;
+  padding: 15px;
+  font-size: 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  background: #2196f3;
+  color: white;
+  cursor: pointer;
+}
+    /* =================================================
        メッセージ
     ================================================= */
     #message {
@@ -264,6 +281,15 @@ id="backButton"
 type="button"
 onclick="location.href='camera.html'">
 📷 カメラに戻る
+</button>
+  <!-- =================================================
+     在庫一覧
+================================================= -->
+<button
+  id="stockButton"
+  type="button"
+  onclick="location.href='stock.html'">
+  📋 在庫一覧を見る
 </button>
 <script>
 /* =================================================
