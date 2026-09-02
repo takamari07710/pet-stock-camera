@@ -134,11 +134,18 @@
 
       align-items: center;
 
-      padding: 8px 0;
+      padding: 10px 0;
 
       border-bottom: 1px solid #ddd;
 
       font-size: 17px;
+
+    }
+
+
+    .infoRow:last-child {
+
+      border-bottom: none;
 
     }
 
@@ -160,7 +167,7 @@
 
       margin-top: 20px;
 
-      padding: 15px;
+      padding: 20px 15px;
 
       background: #fff8e1;
 
@@ -193,28 +200,6 @@
       font-size: 20px;
 
       margin-left: 5px;
-
-    }
-
-
-    /* =================================================
-       合計プレビュー
-    ================================================= */
-
-    #totalPreview {
-
-      margin-top: 15px;
-
-      font-size: 18px;
-
-    }
-
-
-    #totalPreviewValue {
-
-      font-size: 32px;
-
-      font-weight: bold;
 
     }
 
@@ -407,10 +392,14 @@
     style="display:none;">
 
 ```
+<!-- JAN -->
+
 <div class="infoRow">
 
   <span>
+
     JAN
+
   </span>
 
   <span
@@ -424,44 +413,14 @@
 </div>
 
 
-<div class="infoRow">
-
-  <span>
-    パック数
-  </span>
-
-  <span
-    class="infoValue"
-    id="packCount">
-
-    -
-
-  </span>
-
-</div>
-
+<!-- 現在の端数 -->
 
 <div class="infoRow">
 
   <span>
-    1パックあたり
-  </span>
 
-  <span
-    class="infoValue"
-    id="perPack">
-
-    -
-
-  </span>
-
-</div>
-
-
-<div class="infoRow">
-
-  <span>
     現在の端数
+
   </span>
 
   <span
@@ -509,25 +468,6 @@
   個
 
 </span>
-
-
-<!-- =================================================
-     合計プレビュー
-================================================= -->
-
-<div id="totalPreview">
-
-  変更後の合計
-
-  <div id="totalPreviewValue">
-
-    -
-
-  </div>
-
-  個
-
-</div>
 
 
 <!-- =================================================
@@ -722,7 +662,7 @@ function sendToGAS(
 
 
       /* ---------------------------------------------
-         URL作成
+         URL
       --------------------------------------------- */
 
       let url =
@@ -961,10 +901,6 @@ document
             'none';
 
 
-        /*
-         * 入力欄も0に戻す
-         */
-
         document
           .getElementById(
             'remainderInput'
@@ -1009,6 +945,7 @@ document
 
 function displaySelectedProduct() {
 
+
   /* -----------------------------------------------
      JAN
   ----------------------------------------------- */
@@ -1019,32 +956,6 @@ function displaySelectedProduct() {
     )
     .textContent =
       selectedProduct.jan ||
-      '-';
-
-
-  /* -----------------------------------------------
-     パック数
-  ----------------------------------------------- */
-
-  document
-    .getElementById(
-      'packCount'
-    )
-    .textContent =
-      selectedProduct.packCount ??
-      '-';
-
-
-  /* -----------------------------------------------
-     1パックあたり
-  ----------------------------------------------- */
-
-  document
-    .getElementById(
-      'perPack'
-    )
-    .textContent =
-      selectedProduct.perPack ??
       '-';
 
 
@@ -1062,10 +973,7 @@ function displaySelectedProduct() {
 
 
   /*
-   * 重要
-   *
-   * 現在の端数は入力欄には入れない。
-   * 新しく入力する値なので、毎回0から開始する。
+   * 今回入力する値は必ず0から開始
    */
 
   document
@@ -1101,13 +1009,6 @@ function displaySelectedProduct() {
 
 
   /* -----------------------------------------------
-     合計計算
-  ----------------------------------------------- */
-
-  updateTotal();
-
-
-  /* -----------------------------------------------
      入力欄へカーソル
   ----------------------------------------------- */
 
@@ -1117,102 +1018,7 @@ function displaySelectedProduct() {
     )
     .focus();
 
-
 }
-
-
-/* =================================================
-   合計計算
-================================================= */
-
-function updateTotal() {
-
-  if (
-    !selectedProduct
-  ) {
-
-    return;
-
-  }
-
-
-  /*
-   * 現在の端数
-   */
-
-  const currentRemainder =
-    Number(
-      selectedProduct.remainder
-    ) || 0;
-
-
-  /*
-   * 今回追加する端数
-   */
-
-  const inputRemainder =
-    Number(
-      document
-        .getElementById(
-          'remainderInput'
-        )
-        .value
-    ) || 0;
-
-
-  /*
-   * 変更後の端数
-   */
-
-  const newRemainder =
-    currentRemainder +
-    inputRemainder;
-
-
-  /*
-   * パック分
-   */
-
-  const packTotal =
-    Number(
-      selectedProduct.packCount
-    ) *
-    Number(
-      selectedProduct.perPack
-    );
-
-
-  /*
-   * 変更後の合計
-   */
-
-  const total =
-    packTotal +
-    newRemainder;
-
-
-  document
-    .getElementById(
-      'totalPreviewValue'
-    )
-    .textContent =
-      total;
-
-}
-
-
-/* =================================================
-   端数入力変更
-================================================= */
-
-document
-  .getElementById(
-    'remainderInput'
-  )
-  .addEventListener(
-    'input',
-    updateTotal
-  );
 
 
 /* =================================================
@@ -1307,6 +1113,26 @@ async function confirmRemainder() {
   }
 
 
+  /* -----------------------------------------------
+     0の場合
+  ----------------------------------------------- */
+
+  if (
+    remainder === 0
+  ) {
+
+    showMessage(
+      '1個以上入力してください。',
+      true
+    );
+
+    input.focus();
+
+    return;
+
+  }
+
+
   const button =
     document.getElementById(
       'confirmButton'
@@ -1335,21 +1161,22 @@ async function confirmRemainder() {
 
     /* ---------------------------------------------
        GASへ送信
-       ---------------------------------------------
-
+       
        GAS側で
-
-       現在の端数 + 今回入力した端数
-
-       の計算を行います。
-
+       
+       現在の端数
+       ＋
+       今回入力した端数
+       
+       として計算します。
+       
        例：
-
+       
        現在5個
        今回4個
-
+       
        ↓
-
+       
        9個
     --------------------------------------------- */
 
@@ -1394,14 +1221,6 @@ async function confirmRemainder() {
       result.remainder;
 
 
-    selectedProduct.packCount =
-      result.packCount;
-
-
-    selectedProduct.total =
-      result.total;
-
-
     /* ---------------------------------------------
        現在の端数を更新
     --------------------------------------------- */
@@ -1415,32 +1234,11 @@ async function confirmRemainder() {
 
 
     /* ---------------------------------------------
-       パック数を更新
-    --------------------------------------------- */
-
-    document
-      .getElementById(
-        'packCount'
-      )
-      .textContent =
-        result.packCount;
-
-
-    /* ---------------------------------------------
-       ★重要
-       入力欄を0に戻す
+       ★入力欄を0に戻す
     --------------------------------------------- */
 
     input.value =
       0;
-
-
-    /* ---------------------------------------------
-       0に戻した状態で
-       次回入力時の合計を表示
-    --------------------------------------------- */
-
-    updateTotal();
 
 
     /* ---------------------------------------------
