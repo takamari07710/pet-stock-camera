@@ -3,26 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ペットシーツ在庫</title>
+  <title>ペットシーツ在庫v4</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: sans-serif; margin: 0; padding: 15px; background: #f5f5f5; color: #222; text-align: center; }
     h1 { font-size: 24px; margin: 10px 0 15px; }
+    
+    /* モード切替ボタン */
     .mode { display: flex; gap: 10px; width: 100%; max-width: 500px; margin: 15px auto; }
     .mode button { flex: 1; padding: 15px; font-size: 18px; border: none; border-radius: 10px; background: #ddd; cursor: pointer; }
     .mode button.active { background: #2196f3; color: white; }
+    
+    /* カメラエリア */
     #cameraArea { position: relative; width: 400px; height: 200px; max-width: 100%; margin: auto; box-sizing: border-box; }
     #reader { width: 100%; height: 200px; background: white; border-radius: 10px; overflow: hidden; }
     #reader video { width: 100% !important; height: 200px !important; object-fit: cover; }
+    
+    /* 通信中・読み取り成功時の緑色オーバーレイ */
+    #successOverlay {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 9999;
+      background: rgba(46, 125, 50, 0.88);
+      color: white;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      border-radius: 10px;
+      pointer-events: none;
+    }
+    #successOverlay .icon { font-size: 70px; font-weight: bold; line-height: 1; }
+    #successOverlay .title { font-size: 22px; font-weight: bold; margin-top: 5px; }
+    #successOverlay .code { font-size: 16px; margin-top: 5px; opacity: 0.9; }
+
+    /* 結果表示エリア */
     .result { width: 100%; max-width: 500px; margin: 15px auto; padding: 18px; background: white; border-radius: 10px; box-sizing: border-box; }
     #productName { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
-    #message { width: 100%; margin: 10px auto; padding: 12px; border-radius: 8px; background: #e8f5e9; font-size: 14px; word-break: break-all; }
+    #message { width: 100%; margin: 10px auto; padding: 12px; border-radius: 8px; background: #e8f5e9; font-size: 14px; word-break: break-all; box-sizing: border-box; }
     #message.error { background: #ffebee; color: #c62828; }
+
+    /* 端数入力ボタン */
+    #remainderPageButton {
+      display: block;
+      width: 100%;
+      margin-top: 18px;
+      padding: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      background: #ff9800;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* 在庫一覧ボタン */
+    #stockListButton {
+      width: 100%;
+      max-width: 500px;
+      margin: 20px auto 10px;
+      padding: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      background: #607d8b;
+      color: white;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-<h1>🐾 ペットシーツ在庫　v3</h1>
+<h1>🐾 ペットシーツ在庫 v3</h1>
 
 <div class="mode">
   <button id="inButton" class="active" onclick="setMode('in')">＋ 入庫</button>
@@ -31,12 +85,29 @@
 
 <div id="cameraArea">
   <div id="reader"></div>
+  
+  <!-- 読み取りから通信完了まで表示される緑のオーバーレイ -->
+  <div id="successOverlay">
+    <div class="icon">✓</div>
+    <div class="title" id="overlayStatus">通信中...</div>
+    <div class="code" id="successCode"></div>
+  </div>
 </div>
 
 <div class="result">
   <div id="productName">バーコードをかざしてください</div>
   <div id="message">カメラ準備中...</div>
+
+  <!-- 端数入力ページへのボタン -->
+  <button id="remainderPageButton" type="button" onclick="location.href='remainder.html'">
+    ✏️ 端数を入力する
+  </button>
 </div>
+
+<!-- 在庫一覧ページへのボタン -->
+<button id="stockListButton" type="button" onclick="location.href='stock.html'">
+  📦 在庫一覧を見る
+</button>
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwQakZgWFftn4VYnP9BdfoKLLfGu1pjPEPwxY6WSpoLn4aeIIwypYcph-UAs2pLpdxPrA/exec';
@@ -57,6 +128,16 @@ function showMessage(text, isError = false) {
   msg.className = isError ? 'error' : '';
 }
 
+function showGreenOverlay(code, statusText) {
+  document.getElementById('successCode').textContent = 'JAN: ' + code;
+  document.getElementById('overlayStatus').textContent = statusText;
+  document.getElementById('successOverlay').style.display = 'flex';
+}
+
+function hideGreenOverlay() {
+  document.getElementById('successOverlay').style.display = 'none';
+}
+
 function sendToGAS(action, jan) {
   return new Promise((resolve, reject) => {
     const callbackName = 'gasCB_' + Date.now();
@@ -64,8 +145,8 @@ function sendToGAS(action, jan) {
 
     const timer = setTimeout(() => {
       cleanup();
-      reject(new Error('【タイムアウト】GASからの返答がありません。URLまたはデプロイ設定(アクセス制限)を確認してください。'));
-    }, 12000);
+      reject(new Error('【タイムアウト】GASからの返答がありません。デプロイ設定(アクセス制限:全員)を確認してください。'));
+    }, 30000);
 
     function cleanup() {
       clearTimeout(timer);
@@ -99,11 +180,15 @@ async function onScanSuccess(decodedText) {
   processing = true;
 
   const code = String(decodedText).trim();
+  
+  showGreenOverlay(code, '送信中...');
   showMessage('読み取り: ' + code + ' -> 通信開始...');
 
   try {
     const res = await sendToGAS('updateStock', code);
+    
     if (res.success) {
+      showGreenOverlay(code, '更新完了！');
       document.getElementById('productName').textContent = res.name || '商品名未設定';
       showMessage(`【完了】パック数: ${res.packCount} (合計: ${res.total})`);
     } else {
@@ -114,7 +199,10 @@ async function onScanSuccess(decodedText) {
     document.getElementById('productName').textContent = '通信失敗';
     showMessage(err.message, true);
   } finally {
-    setTimeout(() => { processing = false; }, 2000);
+    setTimeout(() => {
+      hideGreenOverlay();
+      processing = false;
+    }, 1200);
   }
 }
 
