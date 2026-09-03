@@ -2,10 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ペットシーツ在庫一覧</title>
 <style>
     body {
@@ -13,18 +10,45 @@
         margin: 0;
         padding: 20px;
         background: #f5f5f5;
+        color: #222;
     }
     h1 {
         margin-top: 0;
         font-size: 24px;
     }
-    button {
-        font-size: 16px;
-        padding: 10px 18px;
-        margin-right: 5px;
+    
+    /* ボタンエリアと統一ボタンデザイン */
+    .button-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
         margin-bottom: 15px;
-        cursor: pointer;
     }
+    .btn {
+        font-size: 16px;
+        font-weight: bold;
+        padding: 12px 18px;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    .btn:active {
+        opacity: 0.8;
+    }
+    
+    /* 各ボタンの色定義（各画面と統一） */
+    .btn-camera {
+        background: #2196f3; /* カメラ・メインの青 */
+    }
+    .btn-remainder {
+        background: #ff9800; /* 端数入力のオレンジ */
+    }
+    .btn-refresh {
+        background: #607d8b; /* 在庫・更新系のグレー */
+    }
+
     .status {
         margin-bottom: 15px;
         color: #555;
@@ -33,6 +57,7 @@
         overflow-x: auto;
         background: white;
         border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     table {
         width: 100%;
@@ -42,7 +67,7 @@
     th,
     td {
         border-bottom: 1px solid #ddd;
-        padding: 10px;
+        padding: 12px 10px;
         text-align: center;
         white-space: nowrap;
     }
@@ -61,24 +86,31 @@
 </head>
 <body>
 <h1>ペットシーツ在庫一覧</h1>
-<button
-    type="button"
-    onclick="location.href='camera.html'"
->
-    📷 カメラに戻る
-</button>
-<button
-    type="button"
-    onclick="location.href='remainder.html'"
->
-    ✏️ 端数入力
-</button>
-<button
-    type="button"
-    onclick="loadStock()"
->
-    🔄 更新
-</button>
+
+<div class="button-group">
+  <button
+      type="button"
+      class="btn btn-camera"
+      onclick="location.href='camera.html'"
+  >
+      📷 カメラに戻る
+  </button>
+  <button
+      type="button"
+      class="btn btn-remainder"
+      onclick="location.href='remainder.html'"
+  >
+      ✏️ 端数入力
+  </button>
+  <button
+      type="button"
+      class="btn btn-refresh"
+      onclick="loadStock()"
+  >
+      🔄 更新
+  </button>
+</div>
+
 <div
     id="status"
     class="status"
